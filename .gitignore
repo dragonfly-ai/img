@@ -1,0 +1,6 @@
+bin/
+exec/
+target/
+*.class
+project/target
+project/project
