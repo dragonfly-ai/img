@@ -8,7 +8,7 @@ organization in ThisBuild := "ai.dragonfly.code"
 
 version in ThisBuild := "0.1"
 
-resolvers in ThisBuild += "dragonfly.ai" at "http://code.dragonfly.ai/"
+resolvers in ThisBuild += "dragonfly.ai" at "http://code.dragonfly.ai:8080/"
 
 publishTo in ThisBuild := Some(Resolver.file("file",  new File( "/var/www/maven" )) )
 
