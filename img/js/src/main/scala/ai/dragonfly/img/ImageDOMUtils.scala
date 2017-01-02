@@ -8,6 +8,7 @@ import org.scalajs.dom.html._
 import org.scalajs.dom.raw.HTMLImageElement
 
 import scala.scalajs.js.annotation.JSExport
+import scala.scalajs.js.typedarray.Uint8ClampedArray
 import scalatags.JsDom.all._
 
 /**
@@ -28,10 +29,10 @@ object ImageDOMUtils {
   @JSExport def blankCanvas(width: Int, height: Int): Canvas = {
     val uuid: UUID = UUID.randomUUID()
     //val canvas = document.getElementById(uuid.toString).asInstanceOf[Canvas]
-    val canvas = ImageDOMUtils.canvasElement(width, height, uuid)
-    val ctx: CanvasRenderingContext2D = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
-    ctx.fillStyle = Color.BLACK.html()
-    ctx.fillRect(0, 0, width, height)
+    val canvas = canvasElement(width, height, uuid)
+//    val ctx: CanvasRenderingContext2D = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
+//    ctx.fillStyle = Color.BLACK.html()
+//    ctx.fillRect(0, 0, width, height)
     canvas
   }
 
@@ -59,4 +60,30 @@ object ImageDOMUtils {
   @JSExport def toHtmlImage(canvas:Canvas): HTMLImageElement = imageElement(canvas.width, canvas.height, canvas.id, canvas.toDataURL("image/png"))
 
   @JSExport def toHtmlImage(img:Img): HTMLImageElement = toHtmlImage(toCanvas(img))
+
+  private def imageDataToImg(imageData:ImageData): Img = {
+    new Img(imageData.width, imageData.height).setUint8ClampedArray(
+      0, 0, imageData.width, imageData.height,
+      imageData.data.asInstanceOf[Uint8ClampedArray]
+    ).asInstanceOf[Img]
+  }
+
+  @JSExport def canvasToImg(canvas:Canvas): Img = {
+    val ctx: CanvasRenderingContext2D = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
+    imageDataToImg(ctx.getImageData(0, 0, canvas.width, canvas.height))
+  }
+
+  @JSExport def htmlImageElementToImg(htmlImageElement: HTMLImageElement): Img = {
+    val canvas: Canvas = blankCanvas(htmlImageElement.naturalWidth, htmlImageElement.naturalHeight)
+    val ctx: CanvasRenderingContext2D = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
+    ctx.drawImage(
+      htmlImageElement,
+      0, 0, htmlImageElement.width, htmlImageElement.height,
+      0, 0, canvas.width, canvas.height
+    )
+
+    imageDataToImg(
+      ctx.getImageData(0, 0, canvas.width, htmlImageElement.height)
+    )
+  }
 }
