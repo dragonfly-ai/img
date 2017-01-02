@@ -12,4 +12,5 @@ class Img (@Override val width: Int, @Override val height: Int) extends ImageCap
 
   @Override def setARGB(x: Int, y: Int, argb: Int): Unit = imageData(linearIndexOf(x,y,width)) = argb
 
+  @Override def linearIndexOf(x: Int, y: Int, width: Int): Int = y * width + x
 }

@@ -32,7 +32,7 @@ trait ImageCapabilities {
     this
   }
 
-  @JSExport def linearIndexOf(x: Int, y: Int, width: Int): Int = (y * width + x) * 4
+  @JSExport def linearIndexOf(x: Int, y: Int, width: Int): Int
 
   @JSExport def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): ImageCapabilities = {
     val subImg = new Img(w, h)

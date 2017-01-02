@@ -28,4 +28,5 @@ class Img (@Override val width: Int, @Override val height: Int) extends ImageCap
     data(index+3) = c.alpha
   }
 
+  @Override def linearIndexOf(x: Int, y: Int, width: Int): Int = (y * width + x) * 4
 }
