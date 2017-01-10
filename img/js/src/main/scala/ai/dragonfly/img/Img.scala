@@ -8,7 +8,7 @@ import scala.scalajs.js.annotation.{JSExportAll, JSExport}
 import scala.scalajs.js.typedarray.Uint8ClampedArray
 
 @JSExport
-class Img (@Override val width: Int, @Override val height: Int) extends ImageCapabilities {
+class Img (@Override val width: Int, @Override val height: Int) extends ImageBasics {
 
   val imageData: ImageData = ImageDOMUtils.blankCanvas(width, height).getContext("2d").asInstanceOf[CanvasRenderingContext2D].getImageData(0, 0, width, height)
 

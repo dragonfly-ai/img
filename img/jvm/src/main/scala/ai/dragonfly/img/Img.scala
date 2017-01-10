@@ -11,7 +11,7 @@ object Img {
   implicit def toImg(bi: BufferedImage): Img = new Img(bi)
 }
 
-class Img (private val bi: BufferedImage) extends ImageCapabilities {
+class Img (private val bi: BufferedImage) extends ImageBasics {
   @Override val width: Int = bi.getWidth
   @Override val height: Int = bi.getHeight
 

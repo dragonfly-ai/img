@@ -15,8 +15,11 @@ var ctx = canvas.getContext("2d");
 ctx.fillStyle = "black";
 ctx.fillRect(0, 0, 800, 800);
 */
+
+var imgOps = ImageOperations();
+
 var img1 = ai.dragonfly.img.Img(1920, 1080);
-img1.randomizeRGB();
+imgOps.randomizeRGB(img1);
 
 var Clr = Color();
 var blue = Clr.RGBA(0,0,255).argb;
@@ -30,7 +33,7 @@ var canvas = idu.toCanvas(img1);
 body.append(canvas);
 
 var img2 = ai.dragonfly.img.Img(50, 50);
-img2.randomizeRGB();
+imgOps.randomizeRGB(img2);
 body.append(idu.toHtmlImage(img2));
 
 img1.setIntArray(30, 60, 50, 50, img2.getIntArray(0, 0, img2.width, img2.height), 0, 50)
@@ -47,6 +50,9 @@ function drawImage(){
   idu.renderToCanvas(img1, canvas);
   body.append(idu.toHtmlImage(logoImg));
   body.append(idu.toHtmlImage(logoImg.getSubImage(310, 150, 100, 100)));
+
+  imgOps.gaussianBlurRGB(logoImg, 6)
+  body.append(idu.toHtmlImage(logoImg));
 }
 
 function drawSprite(){
@@ -56,8 +62,11 @@ function drawSprite(){
   var cornerColor = Clr.toRgba(spriteImg.getARGB(0, 0));
   console.log(cornerColor.toString());
   img1.setUint8ClampedArray(30, 160, spriteImg.width, spriteImg.height, spriteImg.getUint8ClampedArray(0, 0, spriteImg.width, spriteImg.height))
-  img1.overlay(spriteImg, 30, 260, 0, 0, 64, 64);
+  imgOps.overlay(img1, spriteImg, 30, 260, 0, 0, 64, 64);
   idu.renderToCanvas(img1, canvas);
+  body.append(idu.toHtmlImage(spriteImg));
+
+  imgOps.gaussianBlurRGB(spriteImg, 6)
   body.append(idu.toHtmlImage(spriteImg));
 }
 </script>
