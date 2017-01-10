@@ -48,10 +48,10 @@ object ImageOperations {
 
     val temp = new Img(width, height)
     val r: Int = Math.ceil(dk.radius).toInt
+    val vectorStats = new StreamingVectorStats(3)
 
     // First Pass
     toBlur pixels ((x: Int, y: Int) => {
-      val vectorStats = new StreamingVectorStats(3)
       for ( xi: Int <- Math.max(0, x - r) until Math.min(width, x + r + 1) ) {
         val dx = xi - x
         val c: RGBA = toBlur.getARGB(xi, y)
@@ -59,10 +59,10 @@ object ImageOperations {
       }
       val avg: Vector3 = vectorStats.average().asInstanceOf[Vector3]
       temp.setARGB(x, y, RGBA(avg.x.toInt, avg.y.toInt, avg.z.toInt).argb)
+      vectorStats.reset()
     })
 
     toBlur pixels ((x: Int, y: Int) => {
-      val vectorStats = new StreamingVectorStats(3)
       for ( yi <- Math.max(0, y - r) until Math.min(height, y + r + 1) ) {
         val dy = yi - y
         val c: RGBA = temp.getARGB(x, yi)
@@ -70,6 +70,7 @@ object ImageOperations {
       }
       val avg: Vector3 = vectorStats.average().asInstanceOf[Vector3]
       toBlur.setARGB(x, y, RGBA(avg.x.toInt, avg.y.toInt, avg.z.toInt).argb)
+      vectorStats.reset()
     })
 
     toBlur
