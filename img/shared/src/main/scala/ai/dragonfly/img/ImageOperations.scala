@@ -48,6 +48,7 @@ object ImageOperations {
 
     val temp = new Img(width, height)
     val r: Int = Math.ceil(dk.radius).toInt
+
     val vectorStats = new StreamingVectorStats(3)
 
     // First Pass
@@ -75,4 +76,5 @@ object ImageOperations {
 
     toBlur
   }
+
 }
