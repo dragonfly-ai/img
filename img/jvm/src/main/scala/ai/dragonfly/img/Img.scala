@@ -74,6 +74,6 @@ object TestImgJVM extends App {
   var tempDir = System.getProperty("java.io.tmpdir")
   println(tempDir)
   var img = new Img(50, 50)
-  Filter.randomizeRGB(img)
+  ImageOperations.randomizeRGB(img)
   ImageIO.write(img, "PNG", new File(tempDir + "/img-" + System.currentTimeMillis() + ".png"))
 }
