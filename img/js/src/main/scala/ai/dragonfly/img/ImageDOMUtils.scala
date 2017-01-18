@@ -49,12 +49,13 @@ object ImageDOMUtils {
       .putImageData(img.imageData, 0, 0)
   }
 
+  @JSExport def imageElement(src: String): HTMLImageElement = img( attr("src") := src ).render
 
-  @JSExport def imageElement(width:Int, height:Int, id: String, url: String): HTMLImageElement = img(
+  @JSExport def imageElement(width:Int, height:Int, id: String, src: String): HTMLImageElement = img(
     attr("id") := id,
     attr("width") := width,   // don't use: "width := width" the attribute converts to CSS and it introduces a naming conflict.
     attr("height") := height, // don't use: "height := height"
-    attr("src") := url
+    attr("src") := src
   ).render
 
   @JSExport def toHtmlImage(canvas:Canvas): HTMLImageElement = imageElement(canvas.width, canvas.height, canvas.id, canvas.toDataURL("image/png"))
