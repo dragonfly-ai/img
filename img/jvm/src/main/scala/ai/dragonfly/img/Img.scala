@@ -68,6 +68,22 @@ class Img (private val bi: BufferedImage) extends ImageBasics {
 
     this
   }
+
+  override def asUint8ClampedArray: Uint8ClampedArray = {
+    val intPixels: Array[Int] = getIntArray(0, 0, width, height)
+    val uint8CA = new Uint8ClampedArray(4 * intPixels.length)
+    var i1 = 0
+    var argb = 0
+    for (i <- 0 until intPixels.length) {
+      i1 = 4 * i
+      argb = intPixels(i)
+      uint8CA(i1) = argb >> 16 & 0xff
+      uint8CA(i1+1) = argb >> 8 & 0xff
+      uint8CA(i1+2) = argb & 0xff
+      uint8CA(i1+3) = argb >> 24 & 0xff
+    }
+    uint8CA
+  }
 }
 
 object TestImgJVM extends App {

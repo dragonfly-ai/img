@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>img.dragonfly.ai Demo</title>
-    <script type="text/javascript" src="../target/scala-2.12/img-fastopt.js"></script>
+  <meta charset="UTF-8">
+  <title>img.dragonfly.ai Demo</title>
+  <script type="text/javascript" src="../target/scala-2.12/img-fastopt.js"></script>
+<script type="text/javascript">
+
+</script>
 </head>
 <body style="background-color: #000000;">
 <!-- canvas id="testCanvas01" width="800" height="800" style="position: absolute; top: 400px; left: 400px;"></canvas -->
@@ -16,11 +19,23 @@ ctx.fillStyle = "black";
 ctx.fillRect(0, 0, 800, 800);
 */
 
+var idu = ai.dragonfly.img.ImgDOMUtils();
+
 var imgOps = ImageOperations();
+console.log("Initialized ImageOperations()");
 
-var img1 = ai.dragonfly.img.Img(1920, 1080);
+var img1 = ai.dragonfly.img.Img(100, 100);
 imgOps.randomizeRGB(img1);
+body.append(idu.toHtmlImage(img1));
+console.log("randomized img1 with dimensions: " + img1.width + "X" + img1.height);
 
+//var message = ["gaussianBlurRGB", 4, img1.width, img1.pixelData];
+var message = [ai.dragonfly.img.GaussianBlurRGBM(img1.width, img1.pixelData, 4)];
+console.log(message);
+imgWorker.postMessage(message); //, img1.getUint8ClampedArray(0, 0, img1.width, img1.height)]);
+
+
+/*
 var Clr = Color();
 var blue = Clr.RGBA(0,0,255).argb;
 var red = Clr.RGBA(255,0,0).argb;
@@ -28,7 +43,9 @@ img1.pixels(function(x, y){
   if (x % 2 == y % 2) img1.setARGB(x, y, blue);
   else img1.setARGB(x, y, red);
 });
-var idu = ai.dragonfly.img.ImageDOMUtils();
+console.log("stripes on img1");
+
+var idu = ai.dragonfly.img.ImgDOMUtils();
 var canvas = idu.toCanvas(img1);
 body.append(canvas);
 
@@ -39,10 +56,13 @@ body.append(idu.toHtmlImage(img2));
 img1.setIntArray(30, 60, 50, 50, img2.getIntArray(0, 0, img2.width, img2.height), 0, 50)
 img1.setUint8ClampedArray(130, 60, 50, 50, img2.getUint8ClampedArray(0, 0, img2.width, img2.height))
 idu.renderToCanvas(img1, canvas);
-
 console.log(img1.getARGB(1, 2));
+*/
+
 
 function drawImage(){
+  console.log("called drawImage");
+  /*
   var logoImgHtmlElement = document.getElementById("dragonfly.ai-logo");
   console.log(logoImgHtmlElement.naturalWidth + "x" + logoImgHtmlElement.naturalHeight);
   var logoImg = idu.htmlImageElementToImg(logoImgHtmlElement);
@@ -53,9 +73,12 @@ function drawImage(){
 
   imgOps.gaussianBlurRGB(logoImg, 6)
   body.append(idu.toHtmlImage(logoImg));
+  */
 }
 
 function drawSprite(){
+  console.log("called drawSprite");
+  /*
   var spriteImgHtmlElement = document.getElementById("aa");
   console.log(spriteImgHtmlElement.naturalWidth + "x" + spriteImgHtmlElement.naturalHeight);
   var spriteImg = idu.htmlImageElementToImg(spriteImgHtmlElement);
@@ -68,6 +91,7 @@ function drawSprite(){
 
   imgOps.gaussianBlurRGB(spriteImg, 6)
   body.append(idu.toHtmlImage(spriteImg));
+  */
 }
 </script>
 <img id="dragonfly.ai-logo" src="./logo.png" style="position: absolute; top:-5000px; left:-5000px" onload="drawImage()" />

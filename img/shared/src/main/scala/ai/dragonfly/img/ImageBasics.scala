@@ -42,4 +42,8 @@ trait ImageBasics {
 
   @JSExport def setUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): ImageBasics
 
+  @JSExport def asUint8ClampedArray: Uint8ClampedArray
+
+  @JSExport def asIntArray: Array[Int] = getIntArray(0, 0, width, height)
+
 }

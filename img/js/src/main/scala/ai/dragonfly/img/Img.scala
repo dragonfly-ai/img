@@ -1,31 +1,47 @@
 package ai.dragonfly.img
 
+
 import ai.dragonfly.color._
-import org.scalajs.dom.CanvasRenderingContext2D
-import org.scalajs.dom.raw.ImageData
 
 import scala.scalajs.js.annotation.{JSExportAll, JSExport}
 import scala.scalajs.js.typedarray.Uint8ClampedArray
 
 @JSExport
-class Img (@Override val width: Int, @Override val height: Int) extends ImageBasics {
+class Img (@Override val width: Int, @JSExport val pixelData: Uint8ClampedArray) extends ImageBasics {
 
-  val imageData: ImageData = ImageDOMUtils.blankCanvas(width, height).getContext("2d").asInstanceOf[CanvasRenderingContext2D].getImageData(0, 0, width, height)
+  @Override val height: Int = (pixelData.length / 4) / width
+
+  @JSExport def this(width: Int, height: Int) = this(width, new Uint8ClampedArray(width * height * 4))
+
+  def this(width: Int, pixelArray: Array[Int]) = this(
+    width,
+    {
+      val ui8ca = new Uint8ClampedArray(pixelArray.length * 4)
+      var j = 0
+      for (i: Int <- 0 until pixelArray.length) {
+        j = i * 4
+        val c: RGBA = pixelArray(i)
+        ui8ca(j) = c.red
+        ui8ca(j+1) = c.green
+        ui8ca(j+2) = c.blue
+        ui8ca(j+3) = c.alpha
+      }
+      ui8ca
+    }
+  )
 
   @Override def getARGB(x:Int, y:Int): Int = {
     val index = linearIndexOf(x,y)
-    val data: Uint8ClampedArray = imageData.data.asInstanceOf[Uint8ClampedArray]
-    RGBA(data(index), data(index+1), data(index+2), data(index+3)).argb
+    RGBA(pixelData(index), pixelData(index+1), pixelData(index+2), pixelData(index+3)).argb
   }
 
   @Override def setARGB(x:Int, y:Int, argb: Int): Unit = {
     val c: RGBA = argb
     val index = linearIndexOf(x,y)
-    val data: Uint8ClampedArray = imageData.data.asInstanceOf[Uint8ClampedArray]
-    data(index) = c.red
-    data(index+1) = c.green
-    data(index+2) = c.blue
-    data(index+3) = c.alpha
+    pixelData(index) = c.red
+    pixelData(index+1) = c.green
+    pixelData(index+2) = c.blue
+    pixelData(index+3) = c.alpha
   }
 
   @Override def linearIndexOf(x: Int, y: Int): Int = (y * width + x) * 4
@@ -102,4 +118,5 @@ class Img (@Override val width: Int, @Override val height: Int) extends ImageBas
     this
   }
 
+  @JSExport def asUint8ClampedArray: Uint8ClampedArray = pixelData
 }

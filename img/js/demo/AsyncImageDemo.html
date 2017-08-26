@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>img.dragonfly.ai Demo</title>
+  <script type="text/javascript" src="../target/scala-2.12/img-fastopt.js"></script>
+<script type="text/javascript">
+
+</script>
+</head>
+<body style="background-color: #000000;">
+<!-- canvas id="testCanvas01" width="800" height="800" style="position: absolute; top: 400px; left: 400px;"></canvas -->
+<script type="text/javascript">
+var body = document.getElementsByTagName("body")[0];
+
+var idu = ai.dragonfly.img.ImgDOMUtils();
+
+var imgOpsClient = ImgOpsClient();
+console.log("Initialized ImgOpsClient()");
+
+var img1 = ai.dragonfly.img.Img(1000, 1000);
+console.log(img1);
+
+imgOpsClient.randomizeRGB(img1, function(responseImg){
+  console.log(responseImg);
+  body.append(idu.toHtmlImage(responseImg));
+});
+
+function drawImage(){
+  console.log("called drawImage");
+
+}
+
+function drawSprite(){
+  console.log("called drawSprite");
+
+}
+</script>
+<img id="dragonfly.ai-logo" src="./logo.png" style="position: absolute; top:-5000px; left:-5000px" onload="drawImage()" />
+<img id="aa" src="./aa.png" style="position: absolute; top:-5000px; left:-5000px" onload="drawSprite()" />
+</body>
+</html>
