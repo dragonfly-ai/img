@@ -1,11 +1,9 @@
 package ai.dragonfly.img
 
-import java.util.UUID
-
-import ai.dragonfly.color.Color
+import ai.dragonfly.distributed.Snowflake
 import org.scalajs.dom._
 import org.scalajs.dom.html._
-import org.scalajs.dom.raw.{ImageData, HTMLImageElement}
+import org.scalajs.dom.raw.HTMLImageElement
 
 import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.typedarray.Uint8ClampedArray
@@ -18,38 +16,30 @@ import scalatags.JsDom.all._
 @JSExport
 object ImgDOMUtils {
 
-  @JSExport def canvasElement(width:Int, height:Int, uuid: UUID): Canvas = canvas(
-    id := uuid.toString,
+  @JSExport def canvasElement(width:Int, height:Int, id: Long = Snowflake()): Canvas = canvas(
+    attr("id") := id.toString,
     //style := s"position: absolute; top:0px; left:0px; width:${width}px; height:${height}px;",
-    style := s"width:${width}px; height:${height}px;",
+    attr("style") := s"width:${width}px; height:${height}px;",
     attr("width") := width,  // don't use: "width := width" the attribute converts to CSS and it introduces a naming conflict.
     attr("height") := height // don't use: "height := height"
   ).render
 
-  @JSExport def blankCanvas(width: Int, height: Int): Canvas = {
-    val uuid: UUID = UUID.randomUUID()
-    // val canvas = document.getElementById(uuid.toString).asInstanceOf[Canvas]
-    val canvas = canvasElement(width, height, uuid)
-// val ctx: CanvasRenderingContext2D = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
-// ctx.fillStyle = Color.BLACK.html()
-// ctx.fillRect(0, 0, width, height)
-    canvas
-  }
-
   @JSExport def toCanvas(img: Img): Canvas = {
-    val canvas = blankCanvas(img.width, img.height)
-    renderToCanvas(img, canvas)
-    canvas
+    //println("called toCanvas")
+    renderToCanvas(img, canvasElement(img.width, img.height))
   }
 
-  @JSExport def renderToCanvas(img: Img, canvas: Canvas): Unit = {
-    val imgDat = blankImageData(img.width, img.height)
+  @JSExport def renderToCanvas(img: Img, canvas: Canvas): Canvas = {
+    println("renderToCanvas")
+
+    val imgDat = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D].getImageData(0, 0, img.width, img.height)
     val data: Uint8ClampedArray = imgDat.data.asInstanceOf[Uint8ClampedArray]
-    for (i <- 0 to img.pixelData.length) data(i) = img.pixelData(i)
+    for (i <- 0 until img.pixelData.length) data(i) = img.pixelData(i)
     canvas
       .getContext("2d")
       .asInstanceOf[CanvasRenderingContext2D]
       .putImageData(imgDat, 0, 0)
+    canvas
   }
 
   @JSExport def imageElement(src: String): HTMLImageElement = img( attr("src") := src ).render
@@ -65,7 +55,21 @@ object ImgDOMUtils {
 
   @JSExport def toHtmlImage(img:Img): HTMLImageElement = toHtmlImage(toCanvas(img))
 
-  private def imageDataToImg(imageData:ImageData): Img = new Img(imageData.width, imageData.data.asInstanceOf[Uint8ClampedArray])
+  private def imageDataToImg(imageData:ImageData): Img = {
+    new Img(imageData.width, imageData.height).setUint8ClampedArray(
+      0, 0, imageData.width, imageData.height,
+      imageData.data.asInstanceOf[Uint8ClampedArray]
+    ).asInstanceOf[Img]
+  }
+
+  private def imgToImageData(img: Img): ImageData = {
+    val ctx = canvasElement(img.width, img.height).getContext("2d").asInstanceOf[CanvasRenderingContext2D]
+    val imageData = ctx.getImageData(0, 0, img.width, img.height)
+    for (i <- 0 until imageData.data.length) {
+      imageData.data(i) = img.pixelData(i)
+    }
+    imageData
+  }
 
   @JSExport def canvasToImg(canvas:Canvas): Img = {
     val ctx: CanvasRenderingContext2D = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
@@ -73,7 +77,7 @@ object ImgDOMUtils {
   }
 
   @JSExport def htmlImageElementToImg(htmlImageElement: HTMLImageElement): Img = {
-    val canvas: Canvas = blankCanvas(htmlImageElement.naturalWidth, htmlImageElement.naturalHeight)
+    val canvas: Canvas = canvasElement(htmlImageElement.naturalWidth, htmlImageElement.naturalHeight)
     val ctx: CanvasRenderingContext2D = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
     ctx.drawImage(
       htmlImageElement,
@@ -86,7 +90,8 @@ object ImgDOMUtils {
     )
   }
 
+
   @JSExport def blankImageData(width: Int, height: Int): ImageData = {
-    ImgDOMUtils.blankCanvas(width, height).getContext("2d").asInstanceOf[CanvasRenderingContext2D].getImageData(0, 0, width, height)
+    canvasElement(width, height).getContext("2d").asInstanceOf[CanvasRenderingContext2D].getImageData(0, 0, width, height)
   }
 }

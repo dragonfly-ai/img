@@ -4,6 +4,7 @@ import java.nio.ByteBuffer
 import java.util
 import java.util.concurrent.atomic.AtomicLong
 
+import ai.dragonfly.distributed.Snowflake
 import ai.dragonfly.img.Img
 import org.scalajs.dom
 import org.scalajs.dom.raw.{Transferable, Worker}
@@ -14,6 +15,9 @@ import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.typedarray._
 import scala.util.{Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
+
+import boopickle.Default._
+import ai.dragonfly.img.async.ImgOpsMsg._
 
 /**
  * Created by clifton on 5/30/17.
@@ -26,62 +30,60 @@ object ImgOpsClient {
 
   // lazy because the user may not want to use asynchronous image processing.
 
-  private lazy val imgOpsRegistry = new util.HashMap[Long, Promise[ImgOpsResponseMsg]]()
+  private lazy val imgOpsRegistry = new util.HashMap[Long, Promise[Img]]()
 
   private lazy val imgWorker = new Worker("ImgWorker.js")
 
-  imgWorker.addEventListener(
+  imgWorker.addEventListener(  // handle messages from the worker
     "message",
     ( msg: dom.MessageEvent ) => {
-      println("received message: " + msg.data)
+      println("Client received message: " + msg.data)
       msg.data match {
         case s: String => println(s)
-        case ab: ArrayBuffer =>
-          val wrapped: ByteBuffer = TypedArrayBuffer.wrap(ab)
-          try {
-            val responseMsg = ImgOpsResponseMsg.fromBytes(wrapped)
-            println(responseMsg)
-            val promise = imgOpsRegistry.get(responseMsg.id)
-            promise.success(responseMsg)
-          } catch {
-            case e: Throwable => println(e.getStackTrace)
-          }
+        case jsArr: js.Array[_] =>
+          val wrapped: ByteBuffer = jsArr(0).asInstanceOf[ArrayBuffer]
+          println(s"Client wrapped: ${wrapped.toString}")
+          val responseMsg: ImgOpsMsg = Unpickle[ImgOpsMsg].fromBytes(wrapped)
+          println(s"Client received message: $responseMsg")
+          val imgResult: Img = responseMsg(jsArr)
+          val promise = imgOpsRegistry.get(responseMsg.id)
+          promise.success( imgResult )
 
-        case _ => println("Recieved unknown message type.")
+        case _ => println("Client received unknown message type.")
       }
 
     }
   )
 
-  def apply(msg: ImgOpsInvocationMsg): Future[ImgOpsResponseMsg] = {
-    val promise = Promise[ImgOpsResponseMsg]
+  def apply(msg: ImgOpsMsg, transferList: js.Array[Transferable] = js.Array[Transferable]()): Future[Img] = {
+    val promise = Promise[Img]
     imgOpsRegistry.put(msg.id, promise)
-    val msgPayload: ArrayBuffer = new TypedArrayBufferOps(msg.toBytes).arrayBuffer()
-//    val transferables: js.UndefOr[js.Array[Transferable]] = Some(js.Array[Transferable](msgPayload)).orUndefined
-    val transferables: js.Array[Transferable] = js.Array[Transferable](msgPayload)
+    println(msg)
+    val bytes: ArrayBuffer = Pickle.intoBytes(msg)
+    val msgPayload = js.Array[Any](bytes)
+    println(s"Client msgPayLoad: $msgPayload")
 
-    imgWorker.postMessage(msgPayload, transferables)
+    for (t <- transferList) msgPayload.push(t)
+    imgWorker.postMessage(msgPayload, transferList)
+    println(msgPayload)
     promise.future
   }
 
-  def next:Long = ({
-      val atom: AtomicLong = new AtomicLong(0L)
-      () => atom.incrementAndGet()
-    })()
-
   // operations:
-  def randomizeRGB(img: Img): Future[ImgOpsResponseMsg] = {
-    ImgOpsClient(MsgInvokeRandomRGB(next, img.width, img.height))
+  def randomizeRGB(img: Img): Future[Img] = {
+    val msg = RandomRgbMsg(Snowflake(), img.width, img.height)
+    println(msg)
+    ImgOpsClient(msg)
   }
 
   @JSExport def randomizeRGB(img: Img, callback: js.Function1[Img, Any]): Unit = {
 
     randomizeRGB(img) onComplete {
-      case scala.util.Success(response: ImgResponseMsg) =>
-        println("response.img dimensions: " + response.img.width + " " + response.img.height)
-        callback(response.img)
+      case scala.util.Success(img: Img) =>
+        println("response.img dimensions: " + img.width + " " + img.height)
+        callback(img)
       case scala.util.Success(_) => println("Unexpected response: " + _)
-      case Failure(t) => println("failed")
+      case Failure(t) => println("failed" + t)
     }
 
   }
