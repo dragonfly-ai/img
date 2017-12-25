@@ -12,13 +12,6 @@ var body = document.getElementsByTagName("body")[0];
 var Snowflake = ai.dragonfly.distributed.Snowflake();
 Snowflake.ready(
   function(){
-    console.log(Snowflake.prettyPrint(Snowflake.next()));
-    console.log(Snowflake.prettyPrint(Snowflake.next()));
-    console.log(Snowflake.prettyPrint(Snowflake.next()));
-    console.log(Snowflake.prettyPrint(Snowflake.next()));
-    console.log(Snowflake.prettyPrint(Snowflake.next()));
-
-
     var imgOps = ImageOperations();
     var idu = ai.dragonfly.img.ImgDOMUtils();
 
