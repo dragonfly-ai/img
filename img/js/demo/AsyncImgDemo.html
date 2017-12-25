@@ -28,7 +28,17 @@ ai.dragonfly.distributed.Snowflake().ready(
       body.append(idu.toHtmlImage(responseImg));
     });
 
+    var spriteHtmlElement = document.getElementById("aa");
     var logoImgHtmlElement = document.getElementById("dragonfly.ai-logo");
+
+    imgOpsClient.overlay(
+      idu.htmlImageElementToImg(logoImgHtmlElement), idu.htmlImageElementToImg(spriteHtmlElement),
+      200, 200, 0, 0, 64, 64,
+      function(responseImg){
+      console.log("epanechnikovBlurRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      body.append(idu.toHtmlImage(responseImg));
+    });
+
     imgOpsClient.epanechnikovBlurRGB(idu.htmlImageElementToImg(logoImgHtmlElement), 9, function(responseImg){
       console.log("epanechnikovBlurRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
       body.append(idu.toHtmlImage(responseImg));

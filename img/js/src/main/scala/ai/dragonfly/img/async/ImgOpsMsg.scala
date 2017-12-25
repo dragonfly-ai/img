@@ -19,7 +19,8 @@ object ImgOpsMsg {
     addConcreteType[RandomRgbMsg].
     addConcreteType[EpanechnikovBlurRGB].
     addConcreteType[UniformBlurRGB].
-    addConcreteType[GaussianBlurRGB]
+    addConcreteType[GaussianBlurRGB].
+    addConcreteType[Overlay]
 
   implicit def toByteBuffer(ab: ArrayBuffer): ByteBuffer = scala.scalajs.js.typedarray.TypedArrayBuffer.wrap(ab)
 
@@ -44,6 +45,25 @@ case class ImgMsg(override val id: Long, width: Int) extends ImgOpsMsg {
 
 case class RandomRgbMsg(override val id: Long, width: Int, height: Int) extends ImgOpsMsg {
   override def apply(parameters: js.Array[_]): Img = ImgOps.randomizeRGB(new Img(width, height)).asInstanceOf[Img]
+}
+
+case class Overlay(
+  override val id: Long,
+  bgImgWidth: Int, fgImgWidth: Int,
+  bgX: Int, bgY: Int, fgX: Int, fgY: Int,
+  width: Int, height: Int ) extends ImgOpsMsg {
+
+  override def apply(parameters: js.Array[_]): Img = {
+    val bgImg = new Img(
+      bgImgWidth,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    val fgImg = new Img(
+      fgImgWidth,
+      new Uint8ClampedArray(parameters(2).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.overlay(bgImg, fgImg, bgX, bgY, fgX, fgY, width, height).asInstanceOf[Img]
+  }
 }
 
 // blur:

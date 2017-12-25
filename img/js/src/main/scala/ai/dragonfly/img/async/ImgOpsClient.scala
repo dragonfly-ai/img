@@ -5,7 +5,7 @@ import java.util
 import java.util.concurrent.atomic.AtomicLong
 
 import ai.dragonfly.distributed.Snowflake
-import ai.dragonfly.img.Img
+import ai.dragonfly.img.{ImageBasics, Img}
 import org.scalajs.dom
 import org.scalajs.dom.raw.{Transferable, Worker}
 
@@ -15,7 +15,6 @@ import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.typedarray._
 import scala.util.{Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import boopickle.Default._
 import ai.dragonfly.img.async.ImgOpsMsg._
 
@@ -70,6 +69,23 @@ object ImgOpsClient {
   // operations:
   def randomizeRGB(img: Img): Future[Img] = ImgOpsClient(RandomRgbMsg(Snowflake(), img.width, img.height))
   @JSExport def randomizeRGB(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(randomizeRGB(img), callback)
+
+  def overlay(
+    bgImg: Img, fgImg: Img,
+    bgX: Int, bgY: Int, fgX: Int, fgY: Int,
+    width: Int, height: Int
+  ): Future[Img] = {
+    ImgOpsClient(
+      Overlay(Snowflake(), bgImg.width, fgImg.width, bgX, bgY, fgX, fgY, width, height),
+      js.Array[Transferable](bgImg.pixelData.buffer, fgImg.pixelData.buffer)
+    )
+  }
+  @JSExport def overlay(
+    bgImg: Img, fgImg: Img,
+    bgX: Int, bgY: Int, fgX: Int, fgY: Int,
+    width: Int, height: Int,
+    callback: js.Function1[Img, Any]
+  ): Unit = jsCallbackHandler(overlay(bgImg, fgImg, bgX, bgY, fgX, fgY, width, height), callback)
 
   def epanechnikovBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(EpanechnikovBlurRGB(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def epanechnikovBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(epanechnikovBlurRGB(img, radius), callback)
