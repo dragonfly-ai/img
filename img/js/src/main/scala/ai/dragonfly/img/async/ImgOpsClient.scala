@@ -71,15 +71,10 @@ object ImgOpsClient {
   def randomizeRGB(img: Img): Future[Img] = ImgOpsClient(RandomRgbMsg(Snowflake(), img.width, img.height))
   @JSExport def randomizeRGB(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(randomizeRGB(img), callback)
 
-  def epanechnikovBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(
-    EpanechnikovBlurRGB(
-      Snowflake(), img.width, radius
-    ),
-    js.Array[Transferable](img.pixelData.buffer)
-  )
+  def epanechnikovBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(EpanechnikovBlurRGB(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def epanechnikovBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(epanechnikovBlurRGB(img, radius), callback)
 
-  def uniformBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(UniformBlurRGB(Snowflake(), img.width, radius))
+  def uniformBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(UniformBlurRGB(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def uniformBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(uniformBlurRGB(img, radius), callback)
 
   def gaussianBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(GaussianBlurRGB(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))

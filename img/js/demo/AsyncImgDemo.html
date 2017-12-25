@@ -29,9 +29,17 @@ ai.dragonfly.distributed.Snowflake().ready(
     });
 
     var logoImgHtmlElement = document.getElementById("dragonfly.ai-logo");
-    console.log(logoImgHtmlElement.naturalWidth + "x" + logoImgHtmlElement.naturalHeight);
-    var logoImg = idu.htmlImageElementToImg(logoImgHtmlElement);
-    imgOpsClient.gaussianBlurRGB(logoImg, 6, function(responseImg){
+    imgOpsClient.epanechnikovBlurRGB(idu.htmlImageElementToImg(logoImgHtmlElement), 9, function(responseImg){
+      console.log("epanechnikovBlurRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      body.append(idu.toHtmlImage(responseImg));
+    });
+
+    imgOpsClient.uniformBlurRGB(idu.htmlImageElementToImg(logoImgHtmlElement), 9, function(responseImg){
+      console.log("uniformBlurRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      body.append(idu.toHtmlImage(responseImg));
+    });
+
+    imgOpsClient.gaussianBlurRGB(idu.htmlImageElementToImg(logoImgHtmlElement), 9, function(responseImg){
       console.log("gaussianBlurRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
       body.append(idu.toHtmlImage(responseImg));
     });
