@@ -8,8 +8,8 @@ import ai.dragonfly.math.vector.Vector3
 
 import scala.scalajs.js.annotation.{JSExport, JSExportAll}
 
-@JSExport("ImageOperations")
-object ImageOperations {
+@JSExport("ImgOps")
+object ImgOps {
 
   @JSExport def randomizeRGB(img: ImageBasics): ImageBasics = {
     img pixels ( (x: Int, y: Int) => img.setARGB( x, y, Color.random().argb ) )

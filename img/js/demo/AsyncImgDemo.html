@@ -28,6 +28,14 @@ ai.dragonfly.distributed.Snowflake().ready(
       body.append(idu.toHtmlImage(responseImg));
     });
 
+    var logoImgHtmlElement = document.getElementById("dragonfly.ai-logo");
+    console.log(logoImgHtmlElement.naturalWidth + "x" + logoImgHtmlElement.naturalHeight);
+    var logoImg = idu.htmlImageElementToImg(logoImgHtmlElement);
+    imgOpsClient.gaussianBlurRGB(logoImg, 6, function(responseImg){
+      console.log("gaussianBlurRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      body.append(idu.toHtmlImage(responseImg));
+    });
+
   }
 );
 </script>

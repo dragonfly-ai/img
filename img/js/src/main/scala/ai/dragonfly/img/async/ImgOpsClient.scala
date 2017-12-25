@@ -34,20 +34,19 @@ object ImgOpsClient {
 
   private lazy val imgWorker = new Worker("ImgWorker.js")
 
-  imgWorker.addEventListener(  // handle messages from the worker
+  imgWorker.addEventListener( // handle messages from the worker
     "message",
-    ( msg: dom.MessageEvent ) => {
-      println("Client received message: " + msg.data)
+    (msg: dom.MessageEvent) => {
+      println("Client received msg.data: " + msg.data)
       msg.data match {
         case s: String => println(s)
         case jsArr: js.Array[_] =>
-          val wrapped: ByteBuffer = jsArr(0).asInstanceOf[ArrayBuffer]
-          println(s"Client wrapped: ${wrapped.toString}")
-          val responseMsg: ImgOpsMsg = Unpickle[ImgOpsMsg].fromBytes(wrapped)
+          val bytes: ByteBuffer = jsArr(0).asInstanceOf[ArrayBuffer]
+          val responseMsg: ImgOpsMsg = Unpickle[ImgOpsMsg].fromBytes(bytes)
           println(s"Client received message: $responseMsg")
           val imgResult: Img = responseMsg(jsArr)
           val promise = imgOpsRegistry.get(responseMsg.id)
-          promise.success( imgResult )
+          promise.success(imgResult)
 
         case _ => println("Client received unknown message type.")
       }
@@ -61,7 +60,6 @@ object ImgOpsClient {
     println(msg)
     val bytes: ArrayBuffer = Pickle.intoBytes(msg)
     val msgPayload = js.Array[Any](bytes)
-    println(s"Client msgPayLoad: $msgPayload")
 
     for (t <- transferList) msgPayload.push(t)
     imgWorker.postMessage(msgPayload, transferList)
@@ -70,15 +68,26 @@ object ImgOpsClient {
   }
 
   // operations:
-  def randomizeRGB(img: Img): Future[Img] = {
-    val msg = RandomRgbMsg(Snowflake(), img.width, img.height)
-    println(msg)
-    ImgOpsClient(msg)
-  }
+  def randomizeRGB(img: Img): Future[Img] = ImgOpsClient(RandomRgbMsg(Snowflake(), img.width, img.height))
+  @JSExport def randomizeRGB(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(randomizeRGB(img), callback)
 
-  @JSExport def randomizeRGB(img: Img, callback: js.Function1[Img, Any]): Unit = {
+  def epanechnikovBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(
+    EpanechnikovBlurRGB(
+      Snowflake(), img.width, radius
+    ),
+    js.Array[Transferable](img.pixelData.buffer)
+  )
+  @JSExport def epanechnikovBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(epanechnikovBlurRGB(img, radius), callback)
 
-    randomizeRGB(img) onComplete {
+  def uniformBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(UniformBlurRGB(Snowflake(), img.width, radius))
+  @JSExport def uniformBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(uniformBlurRGB(img, radius), callback)
+
+  def gaussianBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(GaussianBlurRGB(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def gaussianBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(gaussianBlurRGB(img, radius), callback)
+
+  // handle asynch image processing operations from javascript.
+  def jsCallbackHandler(imgFuture: Future[Img], callback: js.Function1[Img, Any]): Unit = {
+    imgFuture onComplete {
       case scala.util.Success(img: Img) =>
         println("response.img dimensions: " + img.width + " " + img.height)
         callback(img)
@@ -87,46 +96,5 @@ object ImgOpsClient {
     }
 
   }
-  //
-//  @JSExport def overlay(
-//    bgImg: ImageBasics,
-//    fgImg: ImageBasics,
-//    bgX: Int, bgY: Int, fgX: Int, fgY: Int,
-//    width: Int, height: Int
-//  ): Future[ImageBasics] = {
-//
-//  }
-//
-//  @JSExport def epanechnikovBlurRGB(toBlur: ImageBasics, radius: Int): Future[ImageBasics] = {
-//
-//  }
-//
-//  @JSExport def uniformBlurRGB(toBlur: ImageBasics, radius: Int): Future[ImageBasics] = {
-//
-//  }
-//
-//  @JSExport def gaussianBlurRGB(toBlur: ImageBasics, radius: Int): Future[ImageBasics] = {
-//
-//  }
 
 }
-
-
-/*
-def sendRequest[R](msg:Message):Future[R] = {
-  val promise = Promise[R]
-  val id = nextRequestId()
-  val envelope = Envelope(id, msg)
-  register(id, promise)
-  sendToWorker(envelope)
-  promise.future
-}
-
-The worker processes msg, wraps the result in another Envelope, and the result gets handled back in the main thread with something like:
-
-def handleResult(resultEnv:Envelope):Unit = {
-  val promise = findRegistered(resultEnv.id)
-  val result = resultEnv.msg
-  promise.success(result)
-}
- */
