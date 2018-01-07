@@ -8,9 +8,10 @@
 
 </script>
 </head>
-<body style="background-color: #000000;">
+<body style='background-color: #888888; color: #F0F0F0; font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;'>
 <!-- canvas id="testCanvas01" width="800" height="800" style="position: absolute; top: 400px; left: 400px;"></canvas -->
 <script type="text/javascript">
+var ioc = null;
 ai.dragonfly.distributed.Snowflake().ready(
   function(){
     var body = document.getElementsByTagName("body")[0];
@@ -19,13 +20,15 @@ ai.dragonfly.distributed.Snowflake().ready(
 
     var imgOpsClient = ImgOpsClient();
     console.log("Initialized ImgOpsClient()");
+    ioc = imgOpsClient;
 
     var img1 = ai.dragonfly.img.Img(100, 100);
     console.log(img1);
 
     imgOpsClient.randomizeRGB(img1, function(responseImg){
       console.log(responseImg);
-      body.append(idu.toHtmlImage(responseImg));
+      var div = document.getElementById("randomizeRGB");
+      div.append(idu.toHtmlImage(responseImg));
     });
 
     var spriteHtmlElement = document.getElementById("aa");
@@ -35,23 +38,58 @@ ai.dragonfly.distributed.Snowflake().ready(
       idu.htmlImageElementToImg(logoImgHtmlElement), idu.htmlImageElementToImg(spriteHtmlElement),
       200, 200, 0, 0, 64, 64,
       function(responseImg){
-      console.log("epanechnikovBlurRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
-      body.append(idu.toHtmlImage(responseImg));
+      console.log("overlay response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("overlay");
+      div.append(idu.toHtmlImage(responseImg));
     });
 
     imgOpsClient.epanechnikovBlurRGB(idu.htmlImageElementToImg(logoImgHtmlElement), 9, function(responseImg){
       console.log("epanechnikovBlurRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
-      body.append(idu.toHtmlImage(responseImg));
+      //body.append();
+      var div = document.getElementById("epanechnikovBlurRGB");
+      div.append(idu.toHtmlImage(responseImg));
     });
 
     imgOpsClient.uniformBlurRGB(idu.htmlImageElementToImg(logoImgHtmlElement), 9, function(responseImg){
       console.log("uniformBlurRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
-      body.append(idu.toHtmlImage(responseImg));
+      var div = document.getElementById("uniformBlurRGB");
+      div.append(idu.toHtmlImage(responseImg));
     });
 
     imgOpsClient.gaussianBlurRGB(idu.htmlImageElementToImg(logoImgHtmlElement), 9, function(responseImg){
       console.log("gaussianBlurRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
-      body.append(idu.toHtmlImage(responseImg));
+      var div = document.getElementById("gaussianBlurRGB");
+      div.append(idu.toHtmlImage(responseImg));
+
+      imgOpsClient.differenceMatte(idu.htmlImageElementToImg(logoImgHtmlElement), responseImg, function(responseImg1){
+        console.log("differenceMatte response img: " + responseImg1 + " " + responseImg1.width + "x" + responseImg1.height);
+        var div = document.getElementById("differenceMatte");
+        div.append(idu.toHtmlImage(responseImg1));
+      });
+    });
+
+    imgOpsClient.scale(idu.htmlImageElementToImg(logoImgHtmlElement), 1000, 1000, function(responseImg){
+      console.log("uniform scale up response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("scaleUp");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
+    imgOpsClient.scale(idu.htmlImageElementToImg(logoImgHtmlElement), 250, 1000, function(responseImg){
+      console.log("scale stretch height and compress width response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("scaleDownWidthUpHeight");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
+    imgOpsClient.scale(idu.htmlImageElementToImg(logoImgHtmlElement), 1000, 250, function(responseImg){
+      console.log("scale compress height and stretch width response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("scaleUpWidthDownHeight");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
+    imgOpsClient.scale(idu.htmlImageElementToImg(logoImgHtmlElement), 250, 250, function(responseImg){
+      console.log("uniform scale down response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("scaleDown");
+      div.append(idu.toHtmlImage(responseImg));
     });
 
   }
@@ -59,5 +97,16 @@ ai.dragonfly.distributed.Snowflake().ready(
 </script>
 <img id="dragonfly.ai-logo" src="./logo.png" style="position: absolute; top:-5000px; left:-5000px" />
 <img id="aa" src="./aa.png" style="position: absolute; top:-5000px; left:-5000px" />
+<div id="randomizeRGB">randomizeRGB: <br /></div>
+<div id="overlay">overlay: <br /></div>
+<div id="epanechnikovBlurRGB">epanechnikovBlurRGB: <br /></div>
+<div id="uniformBlurRGB">uniformBlurRGB: <br /></div>
+<div id="gaussianBlurRGB">gaussianBlurRGB: <br /></div>
+<div id="differenceMatte">differenceMatte: <br /></div>
+<div id="scaleUp">scale up: <br /></div>
+<div id="scaleDown">scale down: <br /></div>
+<div id="scaleUpWidthDownHeight">scale up width down height: <br /></div>
+<div id="scaleDownWidthUpHeight">scale down width up height: <br /></div>
+
 </body>
 </html>

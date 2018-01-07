@@ -17,10 +17,12 @@ object ImgOpsMsg {
   implicit val imgOpsPickler = compositePickler[ImgOpsMsg].
     addConcreteType[ImgMsg].
     addConcreteType[RandomRgbMsg].
-    addConcreteType[EpanechnikovBlurRGB].
-    addConcreteType[UniformBlurRGB].
-    addConcreteType[GaussianBlurRGB].
-    addConcreteType[Overlay]
+    addConcreteType[EpanechnikovBlurRGBMsg].
+    addConcreteType[UniformBlurRGBMsg].
+    addConcreteType[GaussianBlurRGBMsg].
+    addConcreteType[OverlayMsg].
+    addConcreteType[DifferenceMatteMsg].
+    addConcreteType[ScaleMsg]
 
   implicit def toByteBuffer(ab: ArrayBuffer): ByteBuffer = scala.scalajs.js.typedarray.TypedArrayBuffer.wrap(ab)
 
@@ -47,7 +49,7 @@ case class RandomRgbMsg(override val id: Long, width: Int, height: Int) extends 
   override def apply(parameters: js.Array[_]): Img = ImgOps.randomizeRGB(new Img(width, height)).asInstanceOf[Img]
 }
 
-case class Overlay(
+case class OverlayMsg(
   override val id: Long,
   bgImgWidth: Int, fgImgWidth: Int,
   bgX: Int, bgY: Int, fgX: Int, fgY: Int,
@@ -67,7 +69,7 @@ case class Overlay(
 }
 
 // blur:
-case class EpanechnikovBlurRGB(override val id: Long, width: Int, radius: Int) extends ImgOpsMsg {
+case class EpanechnikovBlurRGBMsg(override val id: Long, width: Int, radius: Int) extends ImgOpsMsg {
   override def apply(parameters: js.Array[_]): Img = {
     val img = new Img(
       width,
@@ -77,7 +79,7 @@ case class EpanechnikovBlurRGB(override val id: Long, width: Int, radius: Int) e
   }
 }
 
-case class UniformBlurRGB(override val id: Long, width: Int, radius: Int) extends ImgOpsMsg {
+case class UniformBlurRGBMsg(override val id: Long, width: Int, radius: Int) extends ImgOpsMsg {
   override def apply(parameters: js.Array[_]): Img = {
     val img = new Img(
       width,
@@ -87,12 +89,37 @@ case class UniformBlurRGB(override val id: Long, width: Int, radius: Int) extend
   }
 }
 
-case class GaussianBlurRGB(override val id: Long, width: Int, radius: Int) extends ImgOpsMsg {
+case class GaussianBlurRGBMsg(override val id: Long, width: Int, radius: Int) extends ImgOpsMsg {
   override def apply(parameters: js.Array[_]): Img = {
     val img = new Img(
       width,
       new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
     )
     ImgOps.gaussianBlurRGB(img, radius).asInstanceOf[Img]
+  }
+}
+
+
+case class DifferenceMatteMsg(override val id: Long, width1: Int, width2: Int) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img1 = new Img(
+      width1,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    val img2 = new Img(
+      width2,
+      new Uint8ClampedArray(parameters(2).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.differenceMatte(img1, img2).asInstanceOf[Img]
+  }
+}
+
+case class ScaleMsg(override val id: Long, width: Int, newWidth: Int, newHeight: Int) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.scale(img, newWidth, newHeight).asInstanceOf[Img]
   }
 }

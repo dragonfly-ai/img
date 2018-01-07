@@ -76,7 +76,7 @@ object ImgOpsClient {
     width: Int, height: Int
   ): Future[Img] = {
     ImgOpsClient(
-      Overlay(Snowflake(), bgImg.width, fgImg.width, bgX, bgY, fgX, fgY, width, height),
+      OverlayMsg(Snowflake(), bgImg.width, fgImg.width, bgX, bgY, fgX, fgY, width, height),
       js.Array[Transferable](bgImg.pixelData.buffer, fgImg.pixelData.buffer)
     )
   }
@@ -87,14 +87,22 @@ object ImgOpsClient {
     callback: js.Function1[Img, Any]
   ): Unit = jsCallbackHandler(overlay(bgImg, fgImg, bgX, bgY, fgX, fgY, width, height), callback)
 
-  def epanechnikovBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(EpanechnikovBlurRGB(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
+  def epanechnikovBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(EpanechnikovBlurRGBMsg(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def epanechnikovBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(epanechnikovBlurRGB(img, radius), callback)
 
-  def uniformBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(UniformBlurRGB(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
+  def uniformBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(UniformBlurRGBMsg(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def uniformBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(uniformBlurRGB(img, radius), callback)
 
-  def gaussianBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(GaussianBlurRGB(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
+  def gaussianBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(GaussianBlurRGBMsg(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def gaussianBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(gaussianBlurRGB(img, radius), callback)
+
+
+  def differenceMatte(img1: Img, img2: Img): Future[Img] = ImgOpsClient(DifferenceMatteMsg(Snowflake(), img1.width, img2.width), js.Array[Transferable](img1.pixelData.buffer, img2.pixelData.buffer))
+  @JSExport def differenceMatte(img1: Img, img2: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(differenceMatte(img1, img2), callback)
+
+  def scale(img: Img, newWidth: Int, newHeight: Int): Future[Img] = ImgOpsClient(ScaleMsg(Snowflake(), img.width, newWidth, newHeight), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def scale(img1: Img, newWidth: Int, newHeight: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(scale(img1, newWidth, newHeight), callback)
+
 
   // handle asynch image processing operations from javascript.
   def jsCallbackHandler(imgFuture: Future[Img], callback: js.Function1[Img, Any]): Unit = {
