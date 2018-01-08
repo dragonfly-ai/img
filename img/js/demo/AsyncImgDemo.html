@@ -46,6 +46,24 @@ ai.dragonfly.distributed.Snowflake().ready(
       div.append(idu.toHtmlImage(responseImg));
     });
 
+    imgOpsClient.rotate90Degrees(idu.htmlImageElementToImg(logoImgHtmlElement), false, function(responseImg) {
+      console.log("rotate90Degrees response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("rotate90Degrees");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
+    imgOpsClient.rotate90Degrees(idu.htmlImageElementToImg(logoImgHtmlElement), true, function(responseImg1) {
+      console.log("rotate90Degrees response img: " + responseImg1 + " " + responseImg1.width + "x" + responseImg1.height);
+      var div = document.getElementById("rotate90Degrees");
+      div.append(idu.toHtmlImage(responseImg1));
+    });
+
+    imgOpsClient.rotate180Degrees(idu.htmlImageElementToImg(logoImgHtmlElement), function(responseImg1) {
+      console.log("rotate180Degrees response img: " + responseImg1 + " " + responseImg1.width + "x" + responseImg1.height);
+      var div = document.getElementById("rotate180Degrees");
+      div.append(idu.toHtmlImage(responseImg1));
+    });
+
     imgOpsClient.overlay(
       idu.htmlImageElementToImg(logoImgHtmlElement), idu.htmlImageElementToImg(spriteHtmlElement),
       200, 200, 0, 0, 64, 64,
@@ -113,6 +131,8 @@ ai.dragonfly.distributed.Snowflake().ready(
 <div id="randomizeRGB">randomizeRGB: <br /></div>
 <div id="flipHorizontal">flipHorizontal: <br /></div>
 <div id="flipVertical">flipVertical: <br /></div>
+<div id="rotate90Degrees">rotate90Degrees: <br /></div>
+<div id="rotate180Degrees">rotate180Degrees: <br /></div>
 <div id="overlay">overlay: <br /></div>
 <div id="epanechnikovBlurRGB">epanechnikovBlurRGB: <br /></div>
 <div id="uniformBlurRGB">uniformBlurRGB: <br /></div>

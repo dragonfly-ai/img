@@ -19,6 +19,8 @@ object ImgOpsMsg {
     addConcreteType[RandomRgbMsg].
     addConcreteType[FlipHorizontalMsg].
     addConcreteType[FlipVerticalMsg].
+    addConcreteType[Rotate90DegreesMsg].
+    addConcreteType[Rotate180DegreesMsg].
     addConcreteType[EpanechnikovBlurRGBMsg].
     addConcreteType[UniformBlurRGBMsg].
     addConcreteType[GaussianBlurRGBMsg].
@@ -68,6 +70,26 @@ case class FlipVerticalMsg(override val id: Long, width: Int) extends ImgOpsMsg 
       new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
     )
     ImgOps.flipVertical(img).asInstanceOf[Img]
+  }
+}
+
+case class Rotate180DegreesMsg(override val id: Long, width: Int) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.rotate180Degrees(img).asInstanceOf[Img]
+  }
+}
+
+case class Rotate90DegreesMsg(override val id: Long, width: Int, counterClockwise: Boolean) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.rotate90Degrees(img, counterClockwise).asInstanceOf[Img]
   }
 }
 

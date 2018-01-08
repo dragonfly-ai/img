@@ -34,6 +34,23 @@ object ImgOps {
     flipped
   }
 
+  @JSExport def rotate90Degrees(img: ImageBasics, counterClockwise: Boolean = false): ImageBasics = {
+    val rotated: ImageBasics = new Img(img.height, img.width)
+    val rotationFunction = if (counterClockwise) {
+      val endY:Int = img.width - 1; (x: Int, y: Int) => rotated.setARGB(x, y, img.getARGB(endY - y, x))
+    } else {
+      val endX = img.height - 1; (x: Int, y: Int) => rotated.setARGB(x, y, img.getARGB(y, endX - x))
+    }
+    rotated pixels rotationFunction
+  }
+
+  @JSExport def rotate180Degrees (img: ImageBasics): ImageBasics = {
+    val rotated: ImageBasics = new Img(img.width, img.height)
+    val endX: Int = img.width - 1
+    val endY: Int = img.height - 1
+    rotated pixels ((x: Int, y: Int) => rotated.setARGB(x, y, img.getARGB(endX - x, endY - y)))
+  }
+
   @JSExport def overlay(
     bgImg: ImageBasics,
     fgImg: ImageBasics,
@@ -180,7 +197,6 @@ object ImgOps {
           RGBA(v(1).toInt, v(2).toInt, v(3).toInt, v(0).toInt).argb
         })
       })
-      scaled
     } else { // Shrink one dimension and grow the other
 
       val shrinkFirst = if (newWidth < img.width) scale(img, newWidth, img.height)
@@ -188,6 +204,6 @@ object ImgOps {
 
       scale(shrinkFirst, newWidth, newHeight)
     }
-
   }
+
 }
