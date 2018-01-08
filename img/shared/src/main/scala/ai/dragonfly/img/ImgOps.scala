@@ -6,7 +6,7 @@ import ai.dragonfly.math.stats.StreamingVectorStats
 import ai.dragonfly.math.stats.kernel._
 import ai.dragonfly.math.vector.{Vector3, VectorN}
 
-import scala.scalajs.js.annotation.{JSExport, JSExportAll, JSExportTopLevel}
+import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
 @JSExportTopLevel("ai.dragonfly.imgImgOps")
 object ImgOps {
@@ -14,6 +14,24 @@ object ImgOps {
   @JSExport def randomizeRGB(img: ImageBasics): ImageBasics = {
     img pixels ( (x: Int, y: Int) => img.setARGB( x, y, Color.random().argb ) )
     img
+  }
+
+  @JSExport def flipHorizontal(img: ImageBasics): ImageBasics = {
+    val flipped: ImageBasics = new Img(img.width, img.height)
+    val end:Int = img.width - 1
+    flipped pixels ((x: Int, y: Int) => {
+      flipped.setARGB( x, y, img.getARGB(end - x, y) )
+    })
+    flipped
+  }
+
+  @JSExport def flipVertical(img: ImageBasics): ImageBasics = {
+    val flipped: ImageBasics = new Img(img.width, img.height)
+    val end:Int = img.height - 1
+    img pixels ((x: Int, y: Int) => {
+      flipped.setARGB( x, y, img.getARGB(x, end - y) )
+    })
+    flipped
   }
 
   @JSExport def overlay(

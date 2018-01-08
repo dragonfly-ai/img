@@ -17,6 +17,8 @@ object ImgOpsMsg {
   implicit val imgOpsPickler = compositePickler[ImgOpsMsg].
     addConcreteType[ImgMsg].
     addConcreteType[RandomRgbMsg].
+    addConcreteType[FlipHorizontalMsg].
+    addConcreteType[FlipVerticalMsg].
     addConcreteType[EpanechnikovBlurRGBMsg].
     addConcreteType[UniformBlurRGBMsg].
     addConcreteType[GaussianBlurRGBMsg].
@@ -47,6 +49,26 @@ case class ImgMsg(override val id: Long, width: Int) extends ImgOpsMsg {
 
 case class RandomRgbMsg(override val id: Long, width: Int, height: Int) extends ImgOpsMsg {
   override def apply(parameters: js.Array[_]): Img = ImgOps.randomizeRGB(new Img(width, height)).asInstanceOf[Img]
+}
+
+case class FlipHorizontalMsg(override val id: Long, width: Int) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.flipHorizontal(img).asInstanceOf[Img]
+  }
+}
+
+case class FlipVerticalMsg(override val id: Long, width: Int) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.flipVertical(img).asInstanceOf[Img]
+  }
 }
 
 case class OverlayMsg(

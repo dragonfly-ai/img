@@ -34,6 +34,18 @@ ai.dragonfly.distributed.Snowflake().ready(
     var spriteHtmlElement = document.getElementById("aa");
     var logoImgHtmlElement = document.getElementById("dragonfly.ai-logo");
 
+    imgOpsClient.flipHorizontal(idu.htmlImageElementToImg(logoImgHtmlElement), function(responseImg) {
+      console.log("flipHorizontal response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("flipHorizontal");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
+    imgOpsClient.flipVertical(idu.htmlImageElementToImg(logoImgHtmlElement), function(responseImg) {
+      console.log("flipVertical response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("flipVertical");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
     imgOpsClient.overlay(
       idu.htmlImageElementToImg(logoImgHtmlElement), idu.htmlImageElementToImg(spriteHtmlElement),
       200, 200, 0, 0, 64, 64,
@@ -95,9 +107,12 @@ ai.dragonfly.distributed.Snowflake().ready(
   }
 );
 </script>
+
 <img id="dragonfly.ai-logo" src="./logo.png" style="position: absolute; top:-5000px; left:-5000px" />
 <img id="aa" src="./aa.png" style="position: absolute; top:-5000px; left:-5000px" />
 <div id="randomizeRGB">randomizeRGB: <br /></div>
+<div id="flipHorizontal">flipHorizontal: <br /></div>
+<div id="flipVertical">flipVertical: <br /></div>
 <div id="overlay">overlay: <br /></div>
 <div id="epanechnikovBlurRGB">epanechnikovBlurRGB: <br /></div>
 <div id="uniformBlurRGB">uniformBlurRGB: <br /></div>

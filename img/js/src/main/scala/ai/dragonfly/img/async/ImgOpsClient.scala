@@ -11,7 +11,7 @@ import org.scalajs.dom.raw.{Transferable, Worker}
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSExport
+import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 import scala.scalajs.js.typedarray._
 import scala.util.{Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -25,7 +25,6 @@ import ai.dragonfly.img.async.ImgOpsMsg._
 
 @JSExport("ImgOpsClient")
 object ImgOpsClient {
-
 
   // lazy because the user may not want to use asynchronous image processing.
 
@@ -69,6 +68,12 @@ object ImgOpsClient {
   // operations:
   def randomizeRGB(img: Img): Future[Img] = ImgOpsClient(RandomRgbMsg(Snowflake(), img.width, img.height))
   @JSExport def randomizeRGB(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(randomizeRGB(img), callback)
+
+  def flipHorizontal(img: Img): Future[Img] = ImgOpsClient(FlipHorizontalMsg(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def flipHorizontal(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(flipHorizontal(img), callback)
+
+  def flipVertical(img: Img): Future[Img] = ImgOpsClient(FlipVerticalMsg(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def flipVertical(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(flipVertical(img), callback)
 
   def overlay(
     bgImg: Img, fgImg: Img,
