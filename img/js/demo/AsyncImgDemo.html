@@ -116,10 +116,26 @@ ai.dragonfly.distributed.Snowflake().ready(
       div.append(idu.toHtmlImage(responseImg));
     });
 
-    imgOpsClient.scale(idu.htmlImageElementToImg(logoImgHtmlElement), 250, 250, function(responseImg){
+    imgOpsClient.scale(idu.htmlImageElementToImg(logoImgHtmlElement), 50, 50, function(responseImg){
       console.log("uniform scale down response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
       var div = document.getElementById("scaleDown");
       div.append(idu.toHtmlImage(responseImg));
+
+      for (var theta = 15; theta <= 360; theta += 15) {
+        imgOpsClient.rotateDegrees(responseImg.getSubImage(0, 0, responseImg.width, responseImg.height), theta, function(responseImg1) {
+          console.log("rotateDegrees response img: " + responseImg1 + " " + responseImg1.width + "x" + responseImg1.height);
+          var div = document.getElementById("rotateDegrees");
+          div.append(idu.toHtmlImage(responseImg1));
+        });
+      }
+
+      for (var theta = Math.PI / 12; theta <= 2 * Math.PI; theta += Math.PI / 12) {
+        imgOpsClient.rotateRadians(responseImg.getSubImage(0, 0, responseImg.width, responseImg.height), theta, function(responseImg2) {
+          console.log("rotateRadians response img: " + responseImg2 + " " + responseImg2.width + "x" + responseImg2.height);
+          var div = document.getElementById("rotateRadians");
+          div.append(idu.toHtmlImage(responseImg2));
+        });
+      }
     });
 
   }
@@ -133,6 +149,8 @@ ai.dragonfly.distributed.Snowflake().ready(
 <div id="flipVertical">flipVertical: <br /></div>
 <div id="rotate90Degrees">rotate90Degrees: <br /></div>
 <div id="rotate180Degrees">rotate180Degrees: <br /></div>
+<div id="rotateDegrees">rotateDegrees: <br /></div>
+<div id="rotateRadians">rotateRadians: <br /></div>
 <div id="overlay">overlay: <br /></div>
 <div id="epanechnikovBlurRGB">epanechnikovBlurRGB: <br /></div>
 <div id="uniformBlurRGB">uniformBlurRGB: <br /></div>

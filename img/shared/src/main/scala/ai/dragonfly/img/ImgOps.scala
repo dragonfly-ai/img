@@ -4,7 +4,7 @@ import ai.dragonfly.color._
 import ai.dragonfly.color.Color._
 import ai.dragonfly.math.stats.StreamingVectorStats
 import ai.dragonfly.math.stats.kernel._
-import ai.dragonfly.math.vector.{Vector3, VectorN}
+import ai.dragonfly.math.vector.{Vector2, Vector3, VectorN}
 
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
@@ -141,7 +141,7 @@ object ImgOps {
 
   }
 
-//  scale images.  Bilinear interpolation
+  // scale images.  Bilinear interpolation
 
   def scale(img: ImageBasics, newWidth: Int, newHeight: Int ): ImageBasics = {
 
@@ -204,6 +204,77 @@ object ImgOps {
 
       scale(shrinkFirst, newWidth, newHeight)
     }
+  }
+
+  @JSExport def rotateDegrees(img: ImageBasics, angleDegrees: Double): ImageBasics = rotateRadians(img, angleDegrees * 0.01745329252)
+
+  @JSExport def rotateRadians(img: ImageBasics, angleRadians: Double): ImageBasics = {
+    // Step 1, assess canvas size for resulting image:
+    val midpoint1 = new Vector2(img.width / 2.0, img.height / 2.0)
+    val corners: Array[Vector2] = Array(
+      new Vector2(0, 0).subtract(midpoint1).asInstanceOf[Vector2],
+      new Vector2(0, img.height).subtract(midpoint1).asInstanceOf[Vector2],
+      new Vector2(img.width, 0).subtract(midpoint1).asInstanceOf[Vector2],
+      new Vector2(img.width, img.height).subtract(midpoint1).asInstanceOf[Vector2]
+    )
+
+    var minX = Double.MaxValue
+    var minY = Double.MaxValue
+    var maxX = Double.MinValue
+    var maxY = Double.MinValue
+
+    for ( v <- corners ) {
+      val rotated = v.rotate(angleRadians).asInstanceOf[Vector2]
+      minX = Math.min(rotated.x, minX)
+      minY = Math.min(rotated.y, minY)
+      maxX = Math.max(rotated.x, maxX)
+      maxY = Math.max(rotated.y, maxY)
+    }
+
+    val rotated: ImageBasics = new Img(Math.sqrt(Math.pow(maxX - minX, 2)).toInt + 2, Math.sqrt(Math.pow(maxY - minY, 2)).toInt + 2)
+
+    val midpoint2: Vector2 = new Vector2(rotated.width / 2.0, rotated.height / 2.0)
+
+    // Sample pixels from img
+    rotated pixels ((x: Int, y: Int) => {
+
+      val x0 = x - midpoint2.x
+      val y0 = y - midpoint2.y
+
+      val cos = Math.cos( -angleRadians )
+      val sin = Math.sin( -angleRadians )
+
+      val u1 = (x0 * cos) + (y0 * -sin) + midpoint1.x
+      val v1 = (x0 * sin) + (y0 * cos) + midpoint1.y
+
+      if (u1 >= 0 && u1 < img.width && v1 >= 0 && v1 < img.height) {
+        val x1 = u1 - Math.floor(u1)
+        val y1 = v1 - Math.floor(v1)
+
+        val sU = u1.toInt
+        val eU = Math.min(img.width - 1, u1 + 1).toInt
+        val sV = v1.toInt
+        val eV = Math.min(img.height - 1, v1 + 1).toInt
+
+        val c00: RGBA = img.getARGB(sU, sV)
+        val c01: RGBA = img.getARGB(sU, eV)
+        val c10: RGBA = img.getARGB(eU, sV)
+        val c11: RGBA = img.getARGB(eU, eV)
+
+        val w1 = (1 - x1) * (1 - y1)
+        val w2 = x1 * (1 - y1)
+        val w3 = (1 - x1) * y1
+        val w4 = x1 * y1
+
+        val red: Int = (c00.red * w1 + c10.red * w2 + c01.red * w3 + c11.red * w4).toInt
+        val green: Int = (c00.green * w1 + c10.green * w2 + c01.green * w3 + c11.green * w4).toInt
+        val blue: Int = (c00.blue * w1 + c10.blue * w2 + c01.blue * w3 + c11.blue * w4).toInt
+
+        rotated.setARGB(x, y, RGBA(red, green, blue))
+      }
+
+    })
+    rotated
   }
 
 }

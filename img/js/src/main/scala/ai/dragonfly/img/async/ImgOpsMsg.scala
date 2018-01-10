@@ -21,6 +21,8 @@ object ImgOpsMsg {
     addConcreteType[FlipVerticalMsg].
     addConcreteType[Rotate90DegreesMsg].
     addConcreteType[Rotate180DegreesMsg].
+    addConcreteType[RotateDegreesMsg].
+    addConcreteType[RotateRadiansMsg].
     addConcreteType[EpanechnikovBlurRGBMsg].
     addConcreteType[UniformBlurRGBMsg].
     addConcreteType[GaussianBlurRGBMsg].
@@ -73,6 +75,16 @@ case class FlipVerticalMsg(override val id: Long, width: Int) extends ImgOpsMsg 
   }
 }
 
+case class Rotate90DegreesMsg(override val id: Long, width: Int, counterClockwise: Boolean) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.rotate90Degrees(img, counterClockwise).asInstanceOf[Img]
+  }
+}
+
 case class Rotate180DegreesMsg(override val id: Long, width: Int) extends ImgOpsMsg {
   override def apply(parameters: js.Array[_]): Img = {
     val img = new Img(
@@ -83,13 +95,23 @@ case class Rotate180DegreesMsg(override val id: Long, width: Int) extends ImgOps
   }
 }
 
-case class Rotate90DegreesMsg(override val id: Long, width: Int, counterClockwise: Boolean) extends ImgOpsMsg {
+case class RotateDegreesMsg(override val id: Long, width: Int, angle: Double) extends ImgOpsMsg {
   override def apply(parameters: js.Array[_]): Img = {
     val img = new Img(
       width,
       new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
     )
-    ImgOps.rotate90Degrees(img, counterClockwise).asInstanceOf[Img]
+    ImgOps.rotateDegrees(img, angle).asInstanceOf[Img]
+  }
+}
+
+case class RotateRadiansMsg(override val id: Long, width: Int, angleRadians: Double) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.rotateRadians(img, angleRadians).asInstanceOf[Img]
   }
 }
 

@@ -81,6 +81,11 @@ object ImgOpsClient {
   def rotate180Degrees(img: Img): Future[Img] = ImgOpsClient(Rotate180DegreesMsg(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def rotate180Degrees(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(rotate180Degrees(img), callback)
 
+  def rotateDegrees(img: Img, angleDegrees: Double): Future[Img] = ImgOpsClient(RotateDegreesMsg(Snowflake(), img.width, angleDegrees), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def rotateDegrees(img1: Img, angleDegrees: Double, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(rotateDegrees(img1, angleDegrees), callback)
+
+  def rotateRadians(img: Img, angleRadians: Double): Future[Img] = ImgOpsClient(RotateRadiansMsg(Snowflake(), img.width, angleRadians), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def rotateRadians(img1: Img, angleRadians: Double, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(rotateRadians(img1, angleRadians), callback)
 
   def overlay(
     bgImg: Img, fgImg: Img,
