@@ -277,4 +277,23 @@ object ImgOps {
     rotated
   }
 
+  @JSExport def grayscaleAverageRGB(img: ImageBasics): ImageBasics = {
+    val gray: ImageBasics = new Img(img.width, img.height)
+    gray.pixels((x: Int, y: Int) => {
+      val c = img.getARGB(x, y)
+      val avgIntensity = (c.red + c.green + c.blue) / 3
+      gray.setARGB(x, y, RGBA(avgIntensity, avgIntensity, avgIntensity, c.alpha))
+    })
+  }
+
+  @JSExport def grayscaleLABIntensity(img: ImageBasics): ImageBasics = {
+    val gray: ImageBasics = new Img(img.width, img.height)
+    gray.pixels((x: Int, y: Int) => {
+      val c: RGBA = RGBA(img.getARGB(x, y))
+      val lab: LAB = c
+      val intensity: RGBA = SlowSlimLab(lab.L, 0f, 0f)
+      gray.setARGB(x, y, RGBA(intensity.red, intensity.green, intensity.blue, c.alpha))
+    })
+  }
+
 }

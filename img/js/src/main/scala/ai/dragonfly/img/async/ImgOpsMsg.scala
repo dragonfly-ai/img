@@ -28,6 +28,8 @@ object ImgOpsMsg {
     addConcreteType[GaussianBlurRGBMsg].
     addConcreteType[OverlayMsg].
     addConcreteType[DifferenceMatteMsg].
+    addConcreteType[GrayscaleAverageRGBMSG].
+    addConcreteType[GrayscaleLABIntensityMSG].
     addConcreteType[ScaleMsg]
 
   implicit def toByteBuffer(ab: ArrayBuffer): ByteBuffer = scala.scalajs.js.typedarray.TypedArrayBuffer.wrap(ab)
@@ -187,5 +189,25 @@ case class ScaleMsg(override val id: Long, width: Int, newWidth: Int, newHeight:
       new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
     )
     ImgOps.scale(img, newWidth, newHeight).asInstanceOf[Img]
+  }
+}
+
+case class GrayscaleAverageRGBMSG(override val id: Long, width: Int) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.grayscaleAverageRGB(img).asInstanceOf[Img]
+  }
+}
+
+case class GrayscaleLABIntensityMSG(override val id: Long, width: Int) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.grayscaleLABIntensity(img).asInstanceOf[Img]
   }
 }

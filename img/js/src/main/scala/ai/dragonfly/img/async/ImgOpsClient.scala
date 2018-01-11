@@ -104,6 +104,10 @@ object ImgOpsClient {
     callback: js.Function1[Img, Any]
   ): Unit = jsCallbackHandler(overlay(bgImg, fgImg, bgX, bgY, fgX, fgY, width, height), callback)
 
+  def differenceMatte(img1: Img, img2: Img): Future[Img] = ImgOpsClient(DifferenceMatteMsg(Snowflake(), img1.width, img2.width), js.Array[Transferable](img1.pixelData.buffer, img2.pixelData.buffer))
+  @JSExport def differenceMatte(img1: Img, img2: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(differenceMatte(img1, img2), callback)
+
+
   def epanechnikovBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(EpanechnikovBlurRGBMsg(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def epanechnikovBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(epanechnikovBlurRGB(img, radius), callback)
 
@@ -114,8 +118,11 @@ object ImgOpsClient {
   @JSExport def gaussianBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(gaussianBlurRGB(img, radius), callback)
 
 
-  def differenceMatte(img1: Img, img2: Img): Future[Img] = ImgOpsClient(DifferenceMatteMsg(Snowflake(), img1.width, img2.width), js.Array[Transferable](img1.pixelData.buffer, img2.pixelData.buffer))
-  @JSExport def differenceMatte(img1: Img, img2: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(differenceMatte(img1, img2), callback)
+  def grayscaleAverageRGB(img: Img): Future[Img] = ImgOpsClient(GrayscaleAverageRGBMSG(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def grayscaleAverageRGB(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(grayscaleAverageRGB(img), callback)
+
+  def grayscaleLABIntensity(img: Img): Future[Img] = ImgOpsClient(GrayscaleLABIntensityMSG(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def grayscaleLABIntensity(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(grayscaleLABIntensity(img), callback)
 
   def scale(img: Img, newWidth: Int, newHeight: Int): Future[Img] = ImgOpsClient(ScaleMsg(Snowflake(), img.width, newWidth, newHeight), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def scale(img1: Img, newWidth: Int, newHeight: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(scale(img1, newWidth, newHeight), callback)
