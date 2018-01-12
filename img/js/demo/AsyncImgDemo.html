@@ -147,6 +147,12 @@ ai.dragonfly.distributed.Snowflake().ready(
       });
     });
 
+    imgOpsClient.median(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 2, function(responseImg){
+      console.log("median response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("median");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
     imgOpsClient.scale(idu.htmlImageElementToImg(logoImgHtmlElement), 1000, 1000, function(responseImg){
       console.log("uniform scale up response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
       var div = document.getElementById("scaleUp");
@@ -214,6 +220,7 @@ ai.dragonfly.distributed.Snowflake().ready(
 <div id="epanechnikovBlurRGB">epanechnikovBlurRGB: <br /></div>
 <div id="uniformBlurRGB">uniformBlurRGB: <br /></div>
 <div id="gaussianBlurRGB">gaussianBlurRGB: <br /></div>
+<div id="median">median: <br /></div>
 <div id="differenceMatte">differenceMatte: <br /></div>
 <div id="scaleUp">scale up: <br /></div>
 <div id="scaleDown">scale down: <br /></div>

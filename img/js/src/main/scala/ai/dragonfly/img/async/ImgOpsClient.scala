@@ -117,6 +117,9 @@ object ImgOpsClient {
   def gaussianBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(GaussianBlurRGBMsg(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def gaussianBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(gaussianBlurRGB(img, radius), callback)
 
+  def median(img: Img, radius: Int): Future[Img] = ImgOpsClient(MedianMsg(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def median(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(median(img, radius), callback)
+
 
   def grayscaleAverageRGB(img: Img): Future[Img] = ImgOpsClient(GrayscaleAverageRGBMSG(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def grayscaleAverageRGB(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(grayscaleAverageRGB(img), callback)

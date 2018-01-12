@@ -6,6 +6,7 @@ import ai.dragonfly.math.stats.StreamingVectorStats
 import ai.dragonfly.math.stats.kernel._
 import ai.dragonfly.math.vector.{Vector2, Vector3, VectorN}
 
+import scala.collection.mutable
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
 @JSExportTopLevel("ai.dragonfly.imgImgOps")
@@ -390,4 +391,61 @@ object ImgOps {
     })
   }
 
+  @JSExport def median(img: ImageBasics, radius: Int): ImageBasics = {
+    val medianCut: ImageBasics = new Img(img.width, img.height)
+    medianCut pixels ((x: Int, y: Int) => {
+
+      val c: RGBA = img.getARGB(x, y)
+
+      val startY = Math.max ( 0, y - radius )
+      val endY = Math.min(medianCut.height - 1, y + radius)
+      val startX = Math.max ( 0, x - radius )
+      val endX = Math.min(medianCut.width - 1, x + radius)
+
+      val count = (endY - startY) * (endX - startX)
+
+      val r = new Histogram(count)
+      val g = new Histogram(count)
+      val b = new Histogram(count)
+
+      for (y0 <- startY to endY; x0 <- startX to endX) {
+        val c1 = img.getARGB(x0, y0)
+        r(c1.red)
+        g(c1.green)
+        b(c1.blue)
+      }
+
+      medianCut.setARGB(x, y, RGBA(r.median, g.median, b.median))
+    })
+  }
+
+}
+
+class Histogram(total: Int) {
+
+  val h = mutable.TreeMap[Int, Int]()
+  val end = total / 2
+
+  def apply(k: Int): Histogram = {
+    h.get(k) match {
+      case Some(count: Int) => h.put(k, count + 1)
+      case None => h.put(k, 1)
+    }
+    this
+  }
+
+  def median: Int = {
+
+    var sum: Int = 0
+    var candidate = -1
+
+    for ((k, count) <- h) {
+      if (sum > end) return candidate
+      else {
+        candidate = k
+        sum = sum + 1
+      }
+    }
+    candidate
+  }
 }

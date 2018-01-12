@@ -26,6 +26,7 @@ object ImgOpsMsg {
     addConcreteType[EpanechnikovBlurRGBMsg].
     addConcreteType[UniformBlurRGBMsg].
     addConcreteType[GaussianBlurRGBMsg].
+    addConcreteType[MedianMsg].
     addConcreteType[OverlayMsg].
     addConcreteType[DifferenceMatteMsg].
     addConcreteType[GrayscaleAverageRGBMSG].
@@ -275,5 +276,15 @@ case class ContrastMsg(override val id: Long, width: Int, contrast: Double) exte
       new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
     )
     ImgOps.contrast(img, contrast).asInstanceOf[Img]
+  }
+}
+
+case class MedianMsg(override val id: Long, width: Int, radius: Int) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.median(img, radius).asInstanceOf[Img]
   }
 }
