@@ -124,6 +124,10 @@ object ImgOpsClient {
   def grayscaleLABIntensity(img: Img): Future[Img] = ImgOpsClient(GrayscaleLABIntensityMSG(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def grayscaleLABIntensity(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(grayscaleLABIntensity(img), callback)
 
+  def equalizeRGB(img: Img): Future[Img] = ImgOpsClient(EqualizeRGBMSG(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def equalizeRGB(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(equalizeRGB(img), callback)
+
+
   def scale(img: Img, newWidth: Int, newHeight: Int): Future[Img] = ImgOpsClient(ScaleMsg(Snowflake(), img.width, newWidth, newHeight), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def scale(img1: Img, newWidth: Int, newHeight: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(scale(img1, newWidth, newHeight), callback)
 

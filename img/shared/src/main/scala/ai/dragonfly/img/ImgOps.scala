@@ -296,4 +296,43 @@ object ImgOps {
     })
   }
 
+  @JSExport def equalizeRGB(img: ImageBasics): ImageBasics = {
+    val redHist = Array.fill[Double](256)(0.0)
+    val greenHist = Array.fill[Double](256)(0.0)
+    val blueHist = Array.fill[Double](256)(0.0)
+
+    // compute histograms:
+    img pixels ((x: Int, y: Int) => {
+      val c = img.getARGB(x, y)
+      redHist(c.red) = redHist(c.red) + 1.0
+      greenHist(c.green) = greenHist(c.green) + 1.0
+      blueHist(c.blue) = blueHist(c.blue) + 1.0
+    })
+
+    val pixelCount: Double = img.width * img.height
+
+    var redCPD:Double = 0.0
+    var greenCPD:Double = 0.0
+    var blueCPD:Double = 0.0
+
+    for (i <- 0 until 256) {
+      redHist(i) = redCPD + (redHist(i) / pixelCount)
+      redCPD = redHist(i)
+      greenHist(i) = greenCPD + (greenHist(i) / pixelCount)
+      greenCPD = greenHist(i)
+      blueHist(i) = blueCPD + (blueHist(i) / pixelCount)
+      blueCPD = blueHist(i)
+    }
+
+    img pixels ((x: Int, y: Int) => {
+      val c = img.getARGB(x, y)
+      img.setARGB(x, y, RGBA(
+        Math.floor(redHist(c.red) * 255).toInt,
+        Math.floor(greenHist(c.green) * 255).toInt,
+        Math.floor(blueHist(c.blue) * 255).toInt,
+        c.alpha
+      ))
+    })
+  }
+
 }

@@ -86,6 +86,12 @@ ai.dragonfly.distributed.Snowflake().ready(
       div.append(idu.toHtmlImage(responseImg));
     });
 
+    imgOpsClient.equalizeRGB(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), function(responseImg) {
+      console.log("equalizeRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("equalizeRGB");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
     imgOpsClient.epanechnikovBlurRGB(idu.htmlImageElementToImg(logoImgHtmlElement), 9, function(responseImg){
       console.log("epanechnikovBlurRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
       //body.append();
@@ -169,6 +175,7 @@ ai.dragonfly.distributed.Snowflake().ready(
 <div id="overlay">overlay: <br /></div>
 <div id="grayscaleAverageRGB">grayscaleAverageRGB: <br /></div>
 <div id="grayscaleLABIntensity">grayscaleLABIntensity: <br /></div>
+<div id="equalizeRGB">equalizeRGB: <br /></div>
 <div id="epanechnikovBlurRGB">epanechnikovBlurRGB: <br /></div>
 <div id="uniformBlurRGB">uniformBlurRGB: <br /></div>
 <div id="gaussianBlurRGB">gaussianBlurRGB: <br /></div>
