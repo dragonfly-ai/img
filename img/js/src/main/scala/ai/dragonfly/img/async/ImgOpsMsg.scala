@@ -30,6 +30,11 @@ object ImgOpsMsg {
     addConcreteType[DifferenceMatteMsg].
     addConcreteType[GrayscaleAverageRGBMSG].
     addConcreteType[GrayscaleLABIntensityMSG].
+    addConcreteType[NegativeMSG].
+    addConcreteType[ThresholdLabMsg].
+    addConcreteType[ThresholdRGBMsg].
+    addConcreteType[BrightnessMsg].
+    addConcreteType[ContrastMsg].
     addConcreteType[EqualizeRGBMSG].
     addConcreteType[ScaleMsg]
 
@@ -220,5 +225,55 @@ case class EqualizeRGBMSG(override val id: Long, width: Int) extends ImgOpsMsg {
       new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
     )
     ImgOps.equalizeRGB(img).asInstanceOf[Img]
+  }
+}
+
+case class NegativeMSG(override val id: Long, width: Int) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.negative(img).asInstanceOf[Img]
+  }
+}
+
+case class ThresholdLabMsg(override val id: Long, width: Int, intensity: Int) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.thresholdLab(img, intensity).asInstanceOf[Img]
+  }
+}
+
+case class ThresholdRGBMsg(override val id: Long, width: Int, intensity: Int) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.thresholdRGB(img, intensity).asInstanceOf[Img]
+  }
+}
+
+case class BrightnessMsg(override val id: Long, width: Int, brightness: Int) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.brightness(img, brightness).asInstanceOf[Img]
+  }
+}
+
+case class ContrastMsg(override val id: Long, width: Int, contrast: Double) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.contrast(img, contrast).asInstanceOf[Img]
   }
 }

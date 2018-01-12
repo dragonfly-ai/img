@@ -296,6 +296,61 @@ object ImgOps {
     })
   }
 
+  @JSExport def negative(img: ImageBasics): ImageBasics = {
+    img pixels ((x: Int, y: Int) => {
+      val c = img.getARGB(x, y)
+      img.setARGB(x, y, RGBA(255 - c.red, 255 - c.green, 255 - c.blue, c.alpha))
+    })
+  }
+
+  @JSExport def thresholdLab(img: ImageBasics, intensityRGB: Int): ImageBasics = {
+    val labIntensity: LAB = RGBA(intensityRGB, intensityRGB, intensityRGB)
+    val L: Double = labIntensity.L
+    img pixels ((x: Int, y: Int) => {
+      val c: RGBA = img.getARGB(x, y)
+      val lab: LAB = c
+      if (lab.L > L) img.setARGB(x, y, RGBA(255, 255, 255, c.alpha))
+      else img.setARGB(x, y, RGBA(0, 0, 0, c.alpha))
+    })
+  }
+
+  @JSExport def thresholdRGB(img: ImageBasics, intensity: Int): ImageBasics = {
+    img pixels ((x: Int, y: Int) => {
+      val c: RGBA = img.getARGB(x, y)
+      img.setARGB(x, y, RGBA(
+        if (c.red > intensity) 255 else 0,
+        if (c.green > intensity) 255 else 0,
+        if (c.blue > intensity) 255 else 0,
+        c.alpha
+      ))
+    })
+  }
+
+  @JSExport def brightness(img: ImageBasics, b: Int): ImageBasics = {
+      img pixels ((x: Int, y: Int) => {
+        val c: RGBA = img.getARGB(x, y)
+        img.setARGB(x, y, RGBA(
+          Math.max(Math.min(255, c.red + b), 0),
+          Math.max(Math.min(255, c.green + b), 0),
+          Math.max(Math.min(255, c.blue + b), 0),
+          c.alpha
+        ))
+      })
+  }
+
+  @JSExport def contrast(img: ImageBasics, c: Double): ImageBasics = {
+    val f = (259 * (c + 255)) / (255 * (259 - c))
+    img pixels ((x: Int, y: Int) => {
+      val c: RGBA = img.getARGB(x, y)
+      img.setARGB(x, y, RGBA(
+        Math.max(Math.min(255, (f * (c.red - 128) + 128).toInt), 0),
+        Math.max(Math.min(255, (f * (c.green - 128) + 128).toInt), 0),
+        Math.max(Math.min(255, (f * (c.blue - 128) + 128).toInt), 0),
+        c.alpha
+      ))
+    })
+  }
+
   @JSExport def equalizeRGB(img: ImageBasics): ImageBasics = {
     val redHist = Array.fill[Double](256)(0.0)
     val greenHist = Array.fill[Double](256)(0.0)

@@ -92,6 +92,36 @@ ai.dragonfly.distributed.Snowflake().ready(
       div.append(idu.toHtmlImage(responseImg));
     });
 
+    imgOpsClient.negative(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), function(responseImg) {
+      console.log("negative response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("negative");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
+    imgOpsClient.thresholdRGB(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 128, function(responseImg) {
+      console.log("thresholdRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("thresholdRGB");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
+    imgOpsClient.thresholdLab(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 128, function(responseImg) {
+      console.log("thresholdLab response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("thresholdLab");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
+    imgOpsClient.brightness(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 25, function(responseImg) {
+      console.log("brightness response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("brightness");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
+    imgOpsClient.contrast(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 25, function(responseImg) {
+      console.log("contrast response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("contrast");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
     imgOpsClient.epanechnikovBlurRGB(idu.htmlImageElementToImg(logoImgHtmlElement), 9, function(responseImg){
       console.log("epanechnikovBlurRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
       //body.append();
@@ -175,7 +205,12 @@ ai.dragonfly.distributed.Snowflake().ready(
 <div id="overlay">overlay: <br /></div>
 <div id="grayscaleAverageRGB">grayscaleAverageRGB: <br /></div>
 <div id="grayscaleLABIntensity">grayscaleLABIntensity: <br /></div>
+<div id="negative">negative: <br /></div>
 <div id="equalizeRGB">equalizeRGB: <br /></div>
+<div id="thresholdRGB">thresholdRGB: <br /></div>
+<div id="thresholdLab">thresholdLab: <br /></div>
+<div id="brightness">brightness: <br /></div>
+<div id="contrast">contrast: <br /></div>
 <div id="epanechnikovBlurRGB">epanechnikovBlurRGB: <br /></div>
 <div id="uniformBlurRGB">uniformBlurRGB: <br /></div>
 <div id="gaussianBlurRGB">gaussianBlurRGB: <br /></div>

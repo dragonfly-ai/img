@@ -127,6 +127,20 @@ object ImgOpsClient {
   def equalizeRGB(img: Img): Future[Img] = ImgOpsClient(EqualizeRGBMSG(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def equalizeRGB(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(equalizeRGB(img), callback)
 
+  def negative(img: Img): Future[Img] = ImgOpsClient(NegativeMSG(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def negative(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(negative(img), callback)
+
+  def thresholdRGB(img: Img, intensity: Int): Future[Img] = ImgOpsClient(ThresholdRGBMsg(Snowflake(), img.width, intensity), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def thresholdRGB(img: Img, intensity: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(thresholdRGB(img, intensity), callback)
+
+  def thresholdLab(img: Img, intensityRGB: Int): Future[Img] = ImgOpsClient(ThresholdLabMsg(Snowflake(), img.width, intensityRGB), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def thresholdLab(img: Img, intensityRGB: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(thresholdLab(img, intensityRGB), callback)
+
+  def contrast(img: Img, intensityRGB: Int): Future[Img] = ImgOpsClient(ContrastMsg(Snowflake(), img.width, intensityRGB), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def contrast(img: Img, intensityRGB: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(contrast(img, intensityRGB), callback)
+
+  def brightness(img: Img, brightnessDifferential: Int): Future[Img] = ImgOpsClient(BrightnessMsg(Snowflake(), img.width, brightnessDifferential), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def brightness(img: Img, brightnessDifferential: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(brightness(img, brightnessDifferential), callback)
 
   def scale(img: Img, newWidth: Int, newHeight: Int): Future[Img] = ImgOpsClient(ScaleMsg(Snowflake(), img.width, newWidth, newHeight), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def scale(img1: Img, newWidth: Int, newHeight: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(scale(img1, newWidth, newHeight), callback)
