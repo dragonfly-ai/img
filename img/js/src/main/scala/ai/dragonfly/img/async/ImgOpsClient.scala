@@ -65,6 +65,18 @@ object ImgOpsClient {
     promise.future
   }
 
+
+  // handle asynch image processing operations from javascript.
+  def jsCallbackHandler(imgFuture: Future[Img], callback: js.Function1[Img, Any]): Unit = {
+    imgFuture onComplete {
+      case scala.util.Success(img: Img) =>
+        println("response.img dimensions: " + img.width + " " + img.height)
+        callback(img)
+      case scala.util.Success(_) => println("Unexpected response: " + _)
+      case Failure(t) => println("failed" + t)
+    }
+  }
+
   // operations:
   def randomizeRGB(img: Img): Future[Img] = ImgOpsClient(RandomRgbMsg(Snowflake(), img.width, img.height))
   @JSExport def randomizeRGB(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(randomizeRGB(img), callback)
@@ -149,16 +161,5 @@ object ImgOpsClient {
   @JSExport def scale(img1: Img, newWidth: Int, newHeight: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(scale(img1, newWidth, newHeight), callback)
 
 
-  // handle asynch image processing operations from javascript.
-  def jsCallbackHandler(imgFuture: Future[Img], callback: js.Function1[Img, Any]): Unit = {
-    imgFuture onComplete {
-      case scala.util.Success(img: Img) =>
-        println("response.img dimensions: " + img.width + " " + img.height)
-        callback(img)
-      case scala.util.Success(_) => println("Unexpected response: " + _)
-      case Failure(t) => println("failed" + t)
-    }
-
-  }
 
 }

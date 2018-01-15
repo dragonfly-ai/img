@@ -71,6 +71,8 @@ class Img (private val bi: BufferedImage) extends ImageBasics {
   }
 
   override def asUint8ClampedArray = getUint8ClampedArray(0, 0, width, height)
+
+  override def clone(): ImageBasics = getSubImage(0, 0, width, height)
 }
 
 object TestImgJVM extends App {
