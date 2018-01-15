@@ -393,57 +393,101 @@ object ImgOps {
 
   @JSExport def median(img: ImageBasics, radius: Int): ImageBasics = {
     val medianCut: ImageBasics = new Img(img.width, img.height)
-    medianCut pixels ((x: Int, y: Int) => {
 
-      val c: RGBA = img.getARGB(x, y)
+    for (y <- 0 until img.height) {
 
-      val startY = Math.max ( 0, y - radius )
+      val r = new Histogram
+      val g = new Histogram
+      val b = new Histogram
+
+      val startY = Math.max(0, y - radius)
       val endY = Math.min(medianCut.height - 1, y + radius)
-      val startX = Math.max ( 0, x - radius )
-      val endX = Math.min(medianCut.width - 1, x + radius)
 
-      val count = (endY - startY) * (endX - startX)
-
-      val r = new Histogram(count)
-      val g = new Histogram(count)
-      val b = new Histogram(count)
-
-      for (y0 <- startY to endY; x0 <- startX to endX) {
-        val c1 = img.getARGB(x0, y0)
-        r(c1.red)
-        g(c1.green)
-        b(c1.blue)
+      // initialize histograms with half window:
+      for (y0 <- startY to endY) {
+        for (x0 <- 0 to Math.min(medianCut.width - 1, radius)) {
+          val c1 = img.getARGB(x0, y0)
+          r(c1.red)
+          g(c1.green)
+          b(c1.blue)
+        }
       }
 
-      medianCut.setARGB(x, y, RGBA(r.median, g.median, b.median))
-    })
+      medianCut.setARGB(0, y, RGBA(r.median, g.median, b.median))
+
+      for (x <- 1 until img.width) {
+
+        val startX = Math.max(0, x - radius)
+        val endX = Math.min(medianCut.width - 1, x + radius)
+
+        // val count = (endY - startY) * (endX - startX)
+
+        val oldColumn = startX - 1
+        if (oldColumn >= 0) { // remove leftmost column
+          for (y0 <- startY to endY) {
+            val c = img.getARGB(oldColumn, y0)
+            r.remove(c.red)
+            g.remove(c.green)
+            b.remove(c.blue)
+          }
+        }
+        val newColumn = endX + 1
+        if (newColumn < medianCut.width) {
+          for (y0 <- startY to endY) {
+            val c = img.getARGB(newColumn, y0)
+            r(c.red)
+            g(c.green)
+            b(c.blue)
+          }
+        }
+
+        medianCut.setARGB(x, y, RGBA(r.median, g.median, b.median))
+      }
+    }
+    medianCut
   }
+
 
 }
 
-class Histogram(total: Int) {
+class Histogram {
 
-  val h = mutable.TreeMap[Int, Int]()
-  val end = total / 2
+  private val h = mutable.TreeMap[Int, Int]()
+  private var total: Int = 0
 
   def apply(k: Int): Histogram = {
     h.get(k) match {
-      case Some(count: Int) => h.put(k, count + 1)
+      case Some(count: Int) =>
+        h.put(k, count + 1)
+        total = total + 1
       case None => h.put(k, 1)
     }
     this
   }
 
-  def median: Int = {
+  def remove(k: Int): Histogram = {
+    h.get(k) match {
+      case Some(count: Int) =>
+        if (count <= 1) h.remove(k)
+        else {
+          h.put(k, count - 1)
+          total = total - 1
+        }
+      case None =>
+    }
+    this
+  }
 
+  def median: Int = {
     var sum: Int = 0
     var candidate = -1
+    val end = total / 2
 
     for ((k, count) <- h) {
       if (sum > end) return candidate
       else {
         candidate = k
-        sum = sum + 1
+        sum = sum + count
       }
     }
     candidate

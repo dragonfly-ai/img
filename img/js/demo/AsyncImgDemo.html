@@ -147,7 +147,7 @@ ai.dragonfly.distributed.Snowflake().ready(
       });
     });
 
-    imgOpsClient.median(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 2, function(responseImg){
+    imgOpsClient.median(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 3, function(responseImg){
       console.log("median response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
       var div = document.getElementById("median");
       div.append(idu.toHtmlImage(responseImg));
