@@ -120,5 +120,5 @@ class Img (@Override val width: Int, @JSExport val pixelData: Uint8ClampedArray)
 
   @JSExport def asUint8ClampedArray: Uint8ClampedArray = pixelData
 
-  @JSExport override def clone(): ImageBasics = getSubImage(0, 0, width, height)
+  @Override override def copy(): ImageBasics = getSubImage(0, 0, width, height)
 }

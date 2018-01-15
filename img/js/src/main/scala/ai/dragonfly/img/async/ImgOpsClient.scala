@@ -129,6 +129,12 @@ object ImgOpsClient {
   def gaussianBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(GaussianBlurRGBMsg(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def gaussianBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(gaussianBlurRGB(img, radius), callback)
 
+  def unsharpenMaskRGB(img: Img, radius: Int, amount: Double, threshold: Int): Future[Img] = ImgOpsClient(UnsharpenMaskRGBMsg(Snowflake(), img.width, radius, amount, threshold), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def unsharpenMaskRGB(img: Img, radius: Int, amount: Double, threshold: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(unsharpenMaskRGB(img, radius, amount, threshold), callback)
+
+  def unsharpenMaskLAB(img: Img, radius: Int, amount: Double, threshold: Int): Future[Img] = ImgOpsClient(UnsharpenMaskLABMsg(Snowflake(), img.width, radius, amount, threshold), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def unsharpenMaskLAB(img: Img, radius: Int, amount: Double, threshold: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(unsharpenMaskLAB(img, radius, amount, threshold), callback)
+
   def median(img: Img, radius: Int): Future[Img] = ImgOpsClient(MedianMsg(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def median(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(median(img, radius), callback)
 

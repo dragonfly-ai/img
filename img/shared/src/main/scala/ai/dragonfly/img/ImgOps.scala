@@ -113,6 +113,60 @@ object ImgOps {
     toBlur
   }
 
+  def clamp(i: Double): Int = Math.max(Math.min(255, i), 0).toInt
+
+  @JSExport def unsharpenMaskRGB(img: ImageBasics, radius: Int, amount: Double, threshold: Int = 0): ImageBasics = {
+    //sharpened = original + (original − blurred) × amount
+    val t2 = threshold * threshold
+    val blurred = gaussianBlurRGB(img.copy(), radius)
+
+    img pixels ((x: Int, y: Int) => {
+      val oc = img.getARGB(x, y)
+      val bc = blurred.getARGB(x, y)
+
+      var r = oc.red
+      val rb = bc.red
+      val rDif = r - rb
+
+      if (rDif * rDif >= t2) r = clamp(r + (rDif * amount))
+
+      var g = oc.green
+      val gb = bc.green
+      val gDif = g - gb
+      if (gDif * gDif >= t2) g = clamp(g + (gDif * amount))
+
+      var b = oc.blue
+      val bb = bc.blue
+      val bDif = b - bb
+      if (bDif * bDif >= t2) b = clamp(b + (bDif * amount))
+
+      img.setARGB(x, y, RGBA(r, g, b, oc.alpha))
+    })
+    img
+
+  }
+
+  @JSExport def unsharpenMaskLAB(img: ImageBasics, radius: Int, amount: Double, threshold: Int = 0): ImageBasics = {
+    val t2 = threshold * threshold
+    val blurred = gaussianBlurRGB(img.copy(), radius)
+
+    img pixels ((x: Int, y: Int) => {
+      val oc:LAB = RGBA(img.getARGB(x, y))
+      val bc:LAB = RGBA(blurred.getARGB(x, y))
+
+      var l1:Double = oc.L
+      val l2:Double = bc.L
+      val diff = l1 - l2
+
+      if (diff * diff >= t2) l1 = l1 + (diff * amount)
+
+      val c = SlowSlimLab(l1.toFloat, oc.a, oc.b).argb
+      img.setARGB(x, y, RGBA(c.red, c.green, c.blue, oc.alpha))
+    })
+    img
+
+  }
+
   /*
    * Creates a difference matte from the two input images.
    *

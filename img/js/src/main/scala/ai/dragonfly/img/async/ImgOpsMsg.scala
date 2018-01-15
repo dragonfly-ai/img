@@ -26,6 +26,8 @@ object ImgOpsMsg {
     addConcreteType[EpanechnikovBlurRGBMsg].
     addConcreteType[UniformBlurRGBMsg].
     addConcreteType[GaussianBlurRGBMsg].
+    addConcreteType[UnsharpenMaskRGBMsg].
+    addConcreteType[UnsharpenMaskLABMsg].
     addConcreteType[MedianMsg].
     addConcreteType[OverlayMsg].
     addConcreteType[DifferenceMatteMsg].
@@ -171,6 +173,27 @@ case class GaussianBlurRGBMsg(override val id: Long, width: Int, radius: Int) ex
       new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
     )
     ImgOps.gaussianBlurRGB(img, radius).asInstanceOf[Img]
+  }
+}
+
+
+case class UnsharpenMaskRGBMsg(override val id: Long, width: Int, radius: Int, amount: Double, threshold: Int) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.unsharpenMaskRGB(img, radius, amount, threshold).asInstanceOf[Img]
+  }
+}
+
+case class UnsharpenMaskLABMsg(override val id: Long, width: Int, radius: Int, amount: Double, threshold: Int) extends ImgOpsMsg {
+  override def apply(parameters: js.Array[_]): Img = {
+    val img = new Img(
+      width,
+      new Uint8ClampedArray(parameters(1).asInstanceOf[ArrayBuffer])
+    )
+    ImgOps.unsharpenMaskLAB(img, radius, amount, threshold).asInstanceOf[Img]
   }
 }
 

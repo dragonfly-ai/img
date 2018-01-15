@@ -46,4 +46,5 @@ trait ImageBasics {
 
   @JSExport def asIntArray: Array[Int] = getIntArray(0, 0, width, height)
 
+  @JSExport def copy(): ImageBasics
 }

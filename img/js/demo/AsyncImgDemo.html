@@ -22,18 +22,15 @@ ai.dragonfly.distributed.Snowflake().ready(
     console.log("Initialized ImgOpsClient()");
     ioc = imgOpsClient;
 
-    var img1 = ai.dragonfly.img.Img(100, 100);
-    console.log(img1);
+    var spriteHtmlElement = document.getElementById("aa");
+    var logoImgHtmlElement = document.getElementById("dragonfly.ai-logo");
+    var dragonflyPubDomImgHtmlElement = document.getElementById("dragonflyPubDom");
 
-    imgOpsClient.randomizeRGB(img1, function(responseImg){
+    imgOpsClient.randomizeRGB(ai.dragonfly.img.Img(100, 100), function(responseImg){
       console.log(responseImg);
       var div = document.getElementById("randomizeRGB");
       div.append(idu.toHtmlImage(responseImg));
     });
-
-    var spriteHtmlElement = document.getElementById("aa");
-    var logoImgHtmlElement = document.getElementById("dragonfly.ai-logo");
-    var dragonflyPubDomImgHtmlElement = document.getElementById("dragonflyPubDom");
 
     imgOpsClient.flipHorizontal(idu.htmlImageElementToImg(logoImgHtmlElement), function(responseImg) {
       console.log("flipHorizontal response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
@@ -147,6 +144,18 @@ ai.dragonfly.distributed.Snowflake().ready(
       });
     });
 
+    imgOpsClient.unsharpenMaskRGB(idu.htmlImageElementToImg(logoImgHtmlElement), 9, 1, 0, function(responseImg){
+      console.log("unsharpenMask response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("unsharpenMask");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
+    imgOpsClient.unsharpenMaskLAB(idu.htmlImageElementToImg(logoImgHtmlElement), 9, 1, 0, function(responseImg){
+      console.log("unsharpenMask response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("unsharpenMask");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
     imgOpsClient.median(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 3, function(responseImg){
       console.log("median response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
       var div = document.getElementById("median");
@@ -220,6 +229,7 @@ ai.dragonfly.distributed.Snowflake().ready(
 <div id="epanechnikovBlurRGB">epanechnikovBlurRGB: <br /></div>
 <div id="uniformBlurRGB">uniformBlurRGB: <br /></div>
 <div id="gaussianBlurRGB">gaussianBlurRGB: <br /></div>
+<div id="unsharpenMask">unsharpenMask: <br /></div>
 <div id="median">median: <br /></div>
 <div id="differenceMatte">differenceMatte: <br /></div>
 <div id="scaleUp">scale up: <br /></div>
