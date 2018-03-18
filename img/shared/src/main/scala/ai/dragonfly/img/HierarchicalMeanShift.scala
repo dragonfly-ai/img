@@ -14,14 +14,14 @@ import scala.collection.mutable
 trait ClusterNode {
   def getFrequency: Double = weightedVector.weight
 
-  private var parent: Meta = null // this evaluates as null?
+  private var parent: Meta = _ // this evaluates as null?
 
   def setParent(p: Meta): ClusterNode = {
     this.parent = p
     this
   }
   def weightedVector: WeightedVector3
-  def children: Option[PointRegionOctree[ClusterNode]]
+  def children: Option[mutable.HashSet[ClusterNode]]
   def hasParent: Boolean = parent != null
   def getParent() = parent
 }
@@ -31,13 +31,10 @@ case class Leaf(override val weightedVector: WeightedVector3) extends ClusterNod
 }
 
 object Meta {
-  def apply(): Meta = new Meta(
-    new StreamingVectorStats(3),
-    new PointRegionOctree[ClusterNode](150, Vector3(100.0,0.0,0.0))
-  )
+  def apply(): Meta = new Meta(new StreamingVectorStats(3))
 }
 
-class Meta(val stats: StreamingVectorStats, childNodes:PointRegionOctree[ClusterNode]) extends ClusterNode {
+class Meta(val stats: StreamingVectorStats, childNodes:mutable.HashSet[ClusterNode] = new mutable.HashSet[ClusterNode]()) extends ClusterNode {
 
   var distSquaredStats = new StreamingStats  // can this be done with distance squared?
 
@@ -50,9 +47,9 @@ class Meta(val stats: StreamingVectorStats, childNodes:PointRegionOctree[Cluster
   def addChild(child: ClusterNode): Unit = {
     stats(child.weightedVector.v3)
 
-    for ((_, cn) <- childNodes.iterator) distSquaredStats(cn.weightedVector.v3.distanceSquaredTo(child.weightedVector.v3))
+    for (cn <- childNodes.iterator) distSquaredStats(cn.weightedVector.v3.distanceSquaredTo(child.weightedVector.v3))
 
-    childNodes.insert(child.weightedVector.v3, child)
+    childNodes.add(child)
     //this.weightedVector.increaseFrequency(child.weightedVector.weight)
     child.setParent(this) // assign parent to child
   }
@@ -148,7 +145,7 @@ object HierarchicalMeanShift {
     }
     parents
   }
-
+/*
   def refineCluster(parent: Meta,
                     convergenceSensitivity: Double,
                     snap: (Vector3) => Unit,
@@ -181,7 +178,7 @@ object HierarchicalMeanShift {
     }
     adjustedParent
   }
-
+*/
   def meanShift(source: PointRegionOctree[ClusterNode],
                 radius: Double = 2.0,
                 step: (Double) => Double = (r: Double) => r * 1.5,

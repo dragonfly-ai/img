@@ -502,41 +502,45 @@ object ImgOps {
     medianCut
   }
 
-  /*
-  @JSExport def concisePalette(img: ImageBasics): ImageBasics = {
-    img pixels ((x: Int, y: Int) => {
-      var lab: LAB = Color.toLab(img.getARGB(x, y))
-      lab = SlowSlimLab(4 * Math.round(lab.L/4), 4 * Math.round(lab.a/4), 4 * Math.round(lab.b/4))
-      img.setARGB(x, y, lab)
-    })
-  }
-  */
-
   @JSExport def concisePalette(img: ImageBasics): ImageBasics = {
     try {
 
       val colorFrequency = ColorHistogram.fromImage(img).hist // consolidate exact color duplicates
       println(s"found ${colorFrequency.size} distinct colors in the image.")
 
-      val snappedAndMapped = new DiscreteHistogram[LAB]
+      val snappedAndMapped = new DiscreteHistogram[Vector3]
 
       // bin the colors by rounding the L*, a*, and b* components to nearest integers
       for ((c, f) <- colorFrequency) snappedAndMapped.adjust({
-        val lab0 = Color.toLab(RGBA(c)).discretize()
-        SlowSlimLab(4 * Math.round(lab0.L/4), 4 * Math.round(lab0.a/4), 4 * Math.round(lab0.b/4))
+        val lab = Color.toLab(RGBA(c))
+        Vector3(lab.L, lab.a, lab.b).round().asInstanceOf[Vector3]
       }, f)
 
       println(s"found ${snappedAndMapped.hist.size} discretized colors")
 
-      val leafOctree = new PointRegionOctree[ClusterNode]( 100.0, Vector3( 50.0, 0.0, 0.0 ) )
+      // now build up the second level by rounding
+
+      val secondLevelOctree = new PointRegionOctree[ClusterNode]( 100.0, Vector3( 50.0, 0.0, 0.0 ) )
+      val leaves = mutable.HashMap[Vector3, ClusterNode]()
 
       // move the colors into the octree
-      for ((lab, f) <- snappedAndMapped.hist) {
-        val labV3 = Vector3( lab.L, lab.a, lab.b )
-        leafOctree.insert( labV3, Leaf( WeightedVector3(f, labV3) ) )
+      for ((cv3, f) <- snappedAndMapped.hist) {
+        val labV3 = cv3.copy().scale(1.0/4.0).round().scale(4.0).asInstanceOf[Vector3]
+        val leafChild = Leaf( WeightedVector3(f, cv3) )
+        leaves.put(cv3, leafChild)
+        secondLevelOctree.map.get(labV3) match {
+          case Some(p: Meta) => p.addChild(leafChild)
+          case None =>
+            val p = Meta()
+            p.addChild(leafChild)
+            secondLevelOctree.insert( labV3,  p)
+          case _ => println("Leaf node in second tier?")
+        }
       }
 
-      val root = HierarchicalMeanShift.meanShift(leafOctree)
+      println(s"softly binned discritized colors into ${secondLevelOctree.size} meta colors")
+
+      val root = HierarchicalMeanShift.meanShift(secondLevelOctree)
       val rv3 = root.weightedVector.v3
       println(s"average color: " + SlowSlimLab(rv3.x.toFloat, rv3.y.toFloat, rv3.z.toFloat))
 
@@ -545,13 +549,12 @@ object ImgOps {
       val chainStats = new StreamingStats
 
       img pixels ((x: Int, y: Int) => {
-        var lab: LAB = Color.toLab(img.getARGB(x, y))
-        lab = SlowSlimLab(4 * Math.round(lab.L/4), 4 * Math.round(lab.a/4), 4 * Math.round(lab.b/4))
-        val labV3 = Vector3(lab.L, lab.a, lab.b)
+        val lab: LAB = Color.toLab(img.getARGB(x, y))
+        val labV3 = Vector3(lab.L, lab.a, lab.b).round().asInstanceOf[Vector3]
         // Walk up the tree until cluster gets too broadly defined.
-        val rgba = leafOctree.map.get(labV3) match {
+        val rgba = leaves.get(labV3) match {
           case Some(cn: ClusterNode) =>
-            var p = cn
+            var p: ClusterNode = cn
             var i = 0
             while (p.hasParent && labV3.distanceSquaredTo(p.getParent().weightedVector.v3) < 600) {
               p = p.getParent()

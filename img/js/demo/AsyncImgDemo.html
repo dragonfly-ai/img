@@ -108,14 +108,14 @@ ai.dragonfly.distributed.Snowflake().ready(
       div.append(idu.toHtmlImage(responseImg));
     });
 */
-    imgOpsClient.scale(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 400, 288, function(shrunkenImg){
-      imgOpsClient.concisePalette(shrunkenImg, function(responseImg) {
-      //imgOpsClient.concisePalette(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), function(responseImg) {
+    //imgOpsClient.scale(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 400, 288, function(shrunkenImg){
+      //imgOpsClient.concisePalette(shrunkenImg, function(responseImg) {
+      imgOpsClient.concisePalette(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), function(responseImg) {
         console.log("concisePalette response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
         var div = document.getElementById("concisePalette");
         div.append(idu.toHtmlImage(responseImg));
       });
-    });
+    //});
 /*
     imgOpsClient.brightness(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 25, function(responseImg) {
       console.log("brightness response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
