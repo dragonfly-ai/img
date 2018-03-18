@@ -166,6 +166,7 @@ object ImgOpsClient {
   def scale(img: Img, newWidth: Int, newHeight: Int): Future[Img] = ImgOpsClient(ScaleMsg(Snowflake(), img.width, newWidth, newHeight), js.Array[Transferable](img.pixelData.buffer))
   @JSExport def scale(img1: Img, newWidth: Int, newHeight: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(scale(img1, newWidth, newHeight), callback)
 
-
+  def concisePalette(img: Img): Future[Img] = ImgOpsClient(ConcisePaletteMsg(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer))
+  @JSExport def concisePalette(img1: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(concisePalette(img1), callback)
 
 }

@@ -2,9 +2,10 @@ package ai.dragonfly.img
 
 import ai.dragonfly.color._
 import ai.dragonfly.color.Color._
-import ai.dragonfly.math.stats.StreamingVectorStats
+import ai.dragonfly.math.stats.{DiscreteHistogram, StreamingStats, StreamingVectorStats}
 import ai.dragonfly.math.stats.kernel._
-import ai.dragonfly.math.vector.{Vector2, Vector3, VectorN}
+import ai.dragonfly.math.vector.{Vector2, Vector3, VectorN, WeightedVector3}
+import ai.dragonfly.spacial.PointRegionOctree
 
 import scala.collection.mutable
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
@@ -198,7 +199,7 @@ object ImgOps {
 
   // scale images.  Bilinear interpolation
 
-  def scale(img: ImageBasics, newWidth: Int, newHeight: Int ): ImageBasics = {
+  @JSExport def scale(img: ImageBasics, newWidth: Int, newHeight: Int ): ImageBasics = {
 
     if (newWidth >= img.width && newHeight >= img.height) { // Bilinear interpolation to scale image up.
       val scaleX: Double = img.width / newWidth.toDouble
@@ -501,6 +502,77 @@ object ImgOps {
     medianCut
   }
 
+  /*
+  @JSExport def concisePalette(img: ImageBasics): ImageBasics = {
+    img pixels ((x: Int, y: Int) => {
+      var lab: LAB = Color.toLab(img.getARGB(x, y))
+      lab = SlowSlimLab(4 * Math.round(lab.L/4), 4 * Math.round(lab.a/4), 4 * Math.round(lab.b/4))
+      img.setARGB(x, y, lab)
+    })
+  }
+  */
+
+  @JSExport def concisePalette(img: ImageBasics): ImageBasics = {
+    try {
+
+      val colorFrequency = ColorHistogram.fromImage(img).hist // consolidate exact color duplicates
+      println(s"found ${colorFrequency.size} distinct colors in the image.")
+
+      val snappedAndMapped = new DiscreteHistogram[LAB]
+
+      // bin the colors by rounding the L*, a*, and b* components to nearest integers
+      for ((c, f) <- colorFrequency) snappedAndMapped.adjust({
+        val lab0 = Color.toLab(RGBA(c)).discretize()
+        SlowSlimLab(4 * Math.round(lab0.L/4), 4 * Math.round(lab0.a/4), 4 * Math.round(lab0.b/4))
+      }, f)
+
+      println(s"found ${snappedAndMapped.hist.size} discretized colors")
+
+      val leafOctree = new PointRegionOctree[ClusterNode]( 100.0, Vector3( 50.0, 0.0, 0.0 ) )
+
+      // move the colors into the octree
+      for ((lab, f) <- snappedAndMapped.hist) {
+        val labV3 = Vector3( lab.L, lab.a, lab.b )
+        leafOctree.insert( labV3, Leaf( WeightedVector3(f, labV3) ) )
+      }
+
+      val root = HierarchicalMeanShift.meanShift(leafOctree)
+      val rv3 = root.weightedVector.v3
+      println(s"average color: " + SlowSlimLab(rv3.x.toFloat, rv3.y.toFloat, rv3.z.toFloat))
+
+      val transparent = RGBA(255, 255, 255, 0).argb
+      var errorCount = 0
+      val chainStats = new StreamingStats
+
+      img pixels ((x: Int, y: Int) => {
+        var lab: LAB = Color.toLab(img.getARGB(x, y))
+        lab = SlowSlimLab(4 * Math.round(lab.L/4), 4 * Math.round(lab.a/4), 4 * Math.round(lab.b/4))
+        val labV3 = Vector3(lab.L, lab.a, lab.b)
+        // Walk up the tree until cluster gets too broadly defined.
+        val rgba = leafOctree.map.get(labV3) match {
+          case Some(cn: ClusterNode) =>
+            var p = cn
+            var i = 0
+            while (p.hasParent && labV3.distanceSquaredTo(p.getParent().weightedVector.v3) < 600) {
+              p = p.getParent()
+              i += 1
+            }
+            chainStats(i)
+            val colorVector = p.weightedVector.v3
+            SlowSlimLab(colorVector.x.toFloat, colorVector.y.toFloat, colorVector.z.toFloat).argb
+          case None =>
+            errorCount = errorCount + 1
+            transparent
+        }
+        img.setARGB(x, y, rgba)
+      })
+      println(s"Chain Stats: $chainStats")
+    } catch {
+      case e: Throwable => e.printStackTrace()
+    }
+
+    img
+  }
 
 }
 

@@ -17,10 +17,10 @@ val img = crossProject.settings(
   libraryDependencies ++= Seq(
     "org.scala-js" %% "scalajs-dom_sjs0.6" % "0.9.1",
     "com.lihaoyi" %%% "scalatags" % "0.6.2",
-    "ai.dragonfly.code" %%% "color" % "0.1",
-    "ai.dragonfly.code" %%% "vector" % "0.1",
     "io.suzaku" %%% "boopickle" % "1.2.6",
-    "ai.dragonfly.code" %%% "snowflake" % "0.1"
+    "ai.dragonfly.code" %%% "color" % "0.1",
+    "ai.dragonfly.code" %%% "snowflake" % "0.1",
+    "ai.dragonfly.code" %%% "spacial" % "0.1"
   )
 ).jsSettings(
   // JS-specific settings here

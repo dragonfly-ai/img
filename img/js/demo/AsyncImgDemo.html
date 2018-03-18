@@ -26,6 +26,7 @@ ai.dragonfly.distributed.Snowflake().ready(
     var logoImgHtmlElement = document.getElementById("dragonfly.ai-logo");
     var dragonflyPubDomImgHtmlElement = document.getElementById("dragonflyPubDom");
 
+/*
     imgOpsClient.randomizeRGB(ai.dragonfly.img.Img(100, 100), function(responseImg){
       console.log(responseImg);
       var div = document.getElementById("randomizeRGB");
@@ -106,7 +107,16 @@ ai.dragonfly.distributed.Snowflake().ready(
       var div = document.getElementById("thresholdLab");
       div.append(idu.toHtmlImage(responseImg));
     });
-
+*/
+    imgOpsClient.scale(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 400, 288, function(shrunkenImg){
+      imgOpsClient.concisePalette(shrunkenImg, function(responseImg) {
+      //imgOpsClient.concisePalette(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), function(responseImg) {
+        console.log("concisePalette response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+        var div = document.getElementById("concisePalette");
+        div.append(idu.toHtmlImage(responseImg));
+      });
+    });
+/*
     imgOpsClient.brightness(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 25, function(responseImg) {
       console.log("brightness response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
       var div = document.getElementById("brightness");
@@ -151,6 +161,12 @@ ai.dragonfly.distributed.Snowflake().ready(
     });
 
     imgOpsClient.unsharpenMaskLAB(idu.htmlImageElementToImg(logoImgHtmlElement), 9, 1, 0, function(responseImg){
+      console.log("unsharpenMask response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+      var div = document.getElementById("unsharpenMask");
+      div.append(idu.toHtmlImage(responseImg));
+    });
+
+    imgOpsClient.unsharpenMaskLAB(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 9, 1, 0, function(responseImg){
       console.log("unsharpenMask response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
       var div = document.getElementById("unsharpenMask");
       div.append(idu.toHtmlImage(responseImg));
@@ -201,7 +217,7 @@ ai.dragonfly.distributed.Snowflake().ready(
         });
       }
     });
-
+*/
   }
 );
 </script>
@@ -232,6 +248,7 @@ ai.dragonfly.distributed.Snowflake().ready(
 <div id="unsharpenMask">unsharpenMask: <br /></div>
 <div id="median">median: <br /></div>
 <div id="differenceMatte">differenceMatte: <br /></div>
+<div id="concisePalette">concisePalette: <br /></div>
 <div id="scaleUp">scale up: <br /></div>
 <div id="scaleDown">scale down: <br /></div>
 <div id="scaleUpWidthDownHeight">scale up width down height: <br /></div>
