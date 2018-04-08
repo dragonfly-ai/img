@@ -5,9 +5,11 @@ import ai.dragonfly.color.Color._
 import ai.dragonfly.math.stats.{DiscreteHistogram, StreamingStats, StreamingVectorStats}
 import ai.dragonfly.math.stats.kernel._
 import ai.dragonfly.math.vector.{Vector2, Vector3, VectorN, WeightedVector3}
-import ai.dragonfly.spacial.PointRegionOctree
+import ai.dragonfly.spatial.PointRegionOctree
 
+import scala.collection.immutable.HashMap
 import scala.collection.mutable
+import scala.collection.parallel.immutable
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
 @JSExportTopLevel("ai.dragonfly.imgImgOps")
@@ -502,81 +504,96 @@ object ImgOps {
     medianCut
   }
 
-  @JSExport def concisePalette(img: ImageBasics): ImageBasics = {
-    try {
+  @JSExport def concisePalette(img: ImageBasics): ColorPalette = {
+    val colorFrequency = ColorHistogram.fromImage(img).hist // consolidate exact color duplicates
+    println(s"found ${colorFrequency.size} distinct colors in the image.")
 
-      val colorFrequency = ColorHistogram.fromImage(img).hist // consolidate exact color duplicates
-      println(s"found ${colorFrequency.size} distinct colors in the image.")
+    val snappedAndMapped = new DiscreteHistogram[Vector3]
 
-      val snappedAndMapped = new DiscreteHistogram[Vector3]
+    // bin the colors by rounding the L*, a*, and b* components to nearest integers
+    for ((c, f) <- colorFrequency) snappedAndMapped.adjust({
+      val lab = Color.toLab(RGBA(c))
+      Vector3(lab.L, lab.a, lab.b).round().asInstanceOf[Vector3]
+    }, f)
 
-      // bin the colors by rounding the L*, a*, and b* components to nearest integers
-      for ((c, f) <- colorFrequency) snappedAndMapped.adjust({
-        val lab = Color.toLab(RGBA(c))
-        Vector3(lab.L, lab.a, lab.b).round().asInstanceOf[Vector3]
-      }, f)
+    println(s"found ${snappedAndMapped.hist.size} discretized colors")
 
-      println(s"found ${snappedAndMapped.hist.size} discretized colors")
+    // now build up the second level by rounding
+    val secondLevelOctree = new PointRegionOctree[ClusterNode]( 100.0, Vector3( 50.0, 0.0, 0.0 ) )
+    val leaves = mutable.HashMap[Vector3, ClusterNode]()
 
-      // now build up the second level by rounding
-
-      val secondLevelOctree = new PointRegionOctree[ClusterNode]( 100.0, Vector3( 50.0, 0.0, 0.0 ) )
-      val leaves = mutable.HashMap[Vector3, ClusterNode]()
-
-      // move the colors into the octree
-      for ((cv3, f) <- snappedAndMapped.hist) {
-        val labV3 = cv3.copy().scale(1.0/4.0).round().scale(4.0).asInstanceOf[Vector3]
-        val leafChild = Leaf( WeightedVector3(f, cv3) )
-        leaves.put(cv3, leafChild)
-        secondLevelOctree.map.get(labV3) match {
-          case Some(p: Meta) => p.addChild(leafChild)
-          case None =>
-            val p = Meta()
-            p.addChild(leafChild)
-            secondLevelOctree.insert( labV3,  p)
-          case _ => println("Leaf node in second tier?")
-        }
+    // move the colors into the octree
+    for ((cv3, f) <- snappedAndMapped.hist) {
+      val labV3 = cv3.copy().scale(1.0/4.0).round().scale(4.0).asInstanceOf[Vector3]
+      val leafChild = Leaf( WeightedVector3(f, cv3) )
+      leaves.put(cv3, leafChild)
+      secondLevelOctree.map.get(labV3) match {
+        case Some(p: Meta) => p.addChild(leafChild)
+        case None =>
+          val p = Meta()
+          p.addChild(leafChild)
+          secondLevelOctree.insert( labV3,  p)
+        case _ => println("Leaf node in second tier?")
       }
-
-      println(s"softly binned discritized colors into ${secondLevelOctree.size} meta colors")
-
-      val root = HierarchicalMeanShift.meanShift(secondLevelOctree)
-      val rv3 = root.weightedVector.v3
-      println(s"average color: " + SlowSlimLab(rv3.x.toFloat, rv3.y.toFloat, rv3.z.toFloat))
-
-      val transparent = RGBA(255, 255, 255, 0).argb
-      var errorCount = 0
-      val chainStats = new StreamingStats
-
-      img pixels ((x: Int, y: Int) => {
-        val lab: LAB = Color.toLab(img.getARGB(x, y))
-        val labV3 = Vector3(lab.L, lab.a, lab.b).round().asInstanceOf[Vector3]
-        // Walk up the tree until cluster gets too broadly defined.
-        val rgba = leaves.get(labV3) match {
-          case Some(cn: ClusterNode) =>
-            var p: ClusterNode = cn
-            var i = 0
-            while (p.hasParent && labV3.distanceSquaredTo(p.getParent().weightedVector.v3) < 600) {
-              p = p.getParent()
-              i += 1
-            }
-            chainStats(i)
-            val colorVector = p.weightedVector.v3
-            SlowSlimLab(colorVector.x.toFloat, colorVector.y.toFloat, colorVector.z.toFloat).argb
-          case None =>
-            errorCount = errorCount + 1
-            transparent
-        }
-        img.setARGB(x, y, rgba)
-      })
-      println(s"Chain Stats: $chainStats")
-    } catch {
-      case e: Throwable => e.printStackTrace()
     }
+
+    println(s"softly binned discritized colors into ${secondLevelOctree.size} meta colors")
+
+    val root = HierarchicalMeanShift.meanShift(secondLevelOctree)
+    val rv3 = root.weightedVector.v3
+    println(s"average color: " + SlowSlimLab(rv3.x.toFloat, rv3.y.toFloat, rv3.z.toFloat))
+
+    val transparent = RGBA(255, 255, 255, 0).argb
+    var errorCount = 0
+    val chainStats = new StreamingStats
+
+    val colorHistogram = new DiscreteHistogram[Color]
+
+    img pixels ((x: Int, y: Int) => {
+      val lab: LAB = RGBA(img.getARGB(x, y))
+      val labV3 = Vector3(lab.L, lab.a, lab.b).round().asInstanceOf[Vector3]
+
+      // Walk up the tree until cluster gets too broadly defined.
+      val rgba = leaves.get(labV3) match {
+        case Some(cn: ClusterNode) =>
+          var p: ClusterNode = cn
+          var i = 0
+          while (p.hasParent && labV3.distanceSquaredTo(p.getParent().weightedVector.v3) < 900) {
+            p = p.getParent()
+            i += 1
+          }
+          chainStats(i)
+          val colorVector = p.weightedVector.v3
+          SlowSlimLab(colorVector.x.toFloat, colorVector.y.toFloat, colorVector.z.toFloat).argb
+        case None =>
+          errorCount = errorCount + 1
+          transparent
+      }
+      colorHistogram.adjust(rgba, 1)
+    })
+
+    println(s"Chain Stats: $chainStats")
+    println(s"Colors: $colorHistogram")
+
+    val total: Double = img.width * img.height
+    var map = HashMap[Color, Int]()
+
+    for ((c, f) <- colorHistogram.hist) {
+      if (f/total > 0.001) map = map + ((c, f))
+    }
+    println("discarded many colors")
+    ColorPalette(map)
+  }
+
+  @JSExport def projectToPalette(cp: ColorPalette, img: ImageBasics): ImageBasics = {
+    img pixels ((x: Int, y: Int) => {
+      val lab: LAB = RGBA(img.getARGB(x, y))
+      val nearestMatch = cp.nearestMatch[LAB](lab).color
+      img.setARGB(x, y, nearestMatch)
+    })
 
     img
   }
-
 }
 
 class Histogram {

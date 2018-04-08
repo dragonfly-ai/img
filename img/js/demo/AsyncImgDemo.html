@@ -26,7 +26,7 @@ ai.dragonfly.distributed.Snowflake().ready(
     var logoImgHtmlElement = document.getElementById("dragonfly.ai-logo");
     var dragonflyPubDomImgHtmlElement = document.getElementById("dragonflyPubDom");
 
-/*
+
     imgOpsClient.randomizeRGB(ai.dragonfly.img.Img(100, 100), function(responseImg){
       console.log(responseImg);
       var div = document.getElementById("randomizeRGB");
@@ -65,12 +65,14 @@ ai.dragonfly.distributed.Snowflake().ready(
 
     imgOpsClient.overlay(
       idu.htmlImageElementToImg(logoImgHtmlElement), idu.htmlImageElementToImg(spriteHtmlElement),
-      200, 200, 0, 0, 64, 64,
+      200, 200, 0, 0,
+      64, 64,
       function(responseImg){
-      console.log("overlay response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
-      var div = document.getElementById("overlay");
-      div.append(idu.toHtmlImage(responseImg));
-    });
+        console.log("overlay response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
+        var div = document.getElementById("overlay");
+        div.append(idu.toHtmlImage(responseImg));
+      }
+    );
 
     imgOpsClient.grayscaleAverageRGB(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), function(responseImg) {
       console.log("grayscaleAverageRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
@@ -107,16 +109,15 @@ ai.dragonfly.distributed.Snowflake().ready(
       var div = document.getElementById("thresholdLab");
       div.append(idu.toHtmlImage(responseImg));
     });
-*/
-    //imgOpsClient.scale(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 400, 288, function(shrunkenImg){
-      //imgOpsClient.concisePalette(shrunkenImg, function(responseImg) {
-      imgOpsClient.concisePalette(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), function(responseImg) {
-        console.log("concisePalette response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
-        var div = document.getElementById("concisePalette");
-        div.append(idu.toHtmlImage(responseImg));
-      });
-    //});
-/*
+
+
+    imgOpsClient.concisePalette(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), function(responsePalette) {
+      console.log("concisePalette response: " + responsePalette.toString());
+      var div = document.getElementById("concisePalette");
+      div.append(responsePalette.toString());
+    });
+
+
     imgOpsClient.brightness(idu.htmlImageElementToImg(dragonflyPubDomImgHtmlElement), 25, function(responseImg) {
       console.log("brightness response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
       var div = document.getElementById("brightness");
@@ -202,7 +203,7 @@ ai.dragonfly.distributed.Snowflake().ready(
       div.append(idu.toHtmlImage(responseImg));
 
       for (var theta = 15; theta <= 360; theta += 15) {
-        imgOpsClient.rotateDegrees(responseImg.clone(), theta, function(responseImg1) {
+        imgOpsClient.rotateDegrees(responseImg.copy(), theta, function(responseImg1) {
           console.log("rotateDegrees response img: " + responseImg1 + " " + responseImg1.width + "x" + responseImg1.height);
           var div = document.getElementById("rotateDegrees");
           div.append(idu.toHtmlImage(responseImg1));
@@ -210,14 +211,14 @@ ai.dragonfly.distributed.Snowflake().ready(
       }
 
       for (var theta = Math.PI / 12; theta <= 2 * Math.PI; theta += Math.PI / 12) {
-        imgOpsClient.rotateRadians(responseImg.clone(), theta, function(responseImg2) {
+        imgOpsClient.rotateRadians(responseImg.copy(), theta, function(responseImg2) {
           console.log("rotateRadians response img: " + responseImg2 + " " + responseImg2.width + "x" + responseImg2.height);
           var div = document.getElementById("rotateRadians");
           div.append(idu.toHtmlImage(responseImg2));
         });
       }
     });
-*/
+
   }
 );
 </script>

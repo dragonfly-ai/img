@@ -3,7 +3,7 @@ package ai.dragonfly.img
 import ai.dragonfly.math.stats.kernel.{GaussianKernel, Kernel}
 import ai.dragonfly.math.stats.{StreamingStats, StreamingVectorStats}
 import ai.dragonfly.math.vector.{Vector3, WeightedVector3}
-import ai.dragonfly.spacial._
+import ai.dragonfly.spatial._
 
 import scala.collection.mutable
 

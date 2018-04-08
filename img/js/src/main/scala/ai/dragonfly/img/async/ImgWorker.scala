@@ -12,10 +12,10 @@ import org.scalajs.dom.raw._
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
-
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer, TypedArrayBufferOps}
 import boopickle.Default._
-import ImgOpsMsg._
+import ImgOpsTransferable._
+import ai.dragonfly.color.ColorPalette
 
 @js.native @js.annotation.JSGlobalScope
 object WorkerGlobal extends js.Any {
@@ -37,24 +37,32 @@ object ImgWorker {
       case s: String => println("worker received string: " + s)
       case jsArr: js.Array[_] =>
         val wrapped: ByteBuffer = jsArr(0).asInstanceOf[ArrayBuffer]
-        println(s"Worker wrapped: ${wrapped.toString}")
-        println(s"Worker received jsArray: $wrapped")
         // val invocationMsg: ImgOpsMsg = Unpickle[ImgOpsMsg].fromBytes(TypedArrayBuffer.wrap(jsArr(0).asInstanceOf[ArrayBuffer]))
-        val invocationMsg: ImgOpsMsg = Unpickle[ImgOpsMsg].fromBytes(wrapped.asInstanceOf[ByteBuffer])
-        println(s"Worker received invocationMsg: $invocationMsg")
-        val imgResult: Img = invocationMsg(jsArr)
-        //val responsePayload: ArrayBuffer = new TypedArrayBufferOps(invocationMsg.execute().toBytes).arrayBuffer()
-        val imgBytes = imgResult.pixelData.buffer //scala.scalajs.js.typedarray.TypedArrayBufferOps.byteBufferOps(imgResult.pixelData).arrayBuffer()
-        val imgMsg: ImgOpsMsg = ImgMsg(invocationMsg.id, imgResult.width)
-        println(s"Worker imgMsg: $imgMsg")
-        val pickledBytes = Pickle.intoBytes( imgMsg )
-        println(s"Worker pickledBytes: $pickledBytes")
-        val imgMsgBytes: ArrayBuffer = pickledBytes
-        println(s"Worker imgMsgBytes: $imgMsgBytes")
-        WorkerGlobal.postMessage(
-          js.Array(imgMsgBytes, imgBytes),
-          js.Array(imgMsgBytes, imgBytes)
-        )
+        val transferred: ImgOpsTransferable = Unpickle[ImgOpsTransferable].fromBytes(wrapped.asInstanceOf[ByteBuffer])
+        println(s"Worker received message: $transferred")
+        transferred match {
+          case imgInvocationMsg: YieldsImg =>
+            val imgResult: Img = imgInvocationMsg(jsArr)
+            val imgBytes = imgResult.pixelData.buffer
+            val imgMsg: ImgOpsTransferable = ImgMsg(imgInvocationMsg.id, imgResult.width)
+            println(s"Worker response message: $imgMsg")
+            val imgMsgBytes: ArrayBuffer = Pickle.intoBytes( imgMsg )
+            WorkerGlobal.postMessage(
+              js.Array(imgMsgBytes, imgBytes),
+              js.Array(imgMsgBytes, imgBytes)
+            )
+          case paletteInvocationMsg: YieldsColorPalette =>
+            val paletteResult: ColorPalette = paletteInvocationMsg(jsArr)
+            val paletteBytes = colorPaletteToBytes(paletteResult)
+            val paletteMsg: ImgOpsTransferable = PaletteMsg(paletteInvocationMsg.id)
+            println(s"Worker response message: $paletteMsg")
+            val paletteMsgBytes: ArrayBuffer = Pickle.intoBytes( paletteMsg )
+            WorkerGlobal.postMessage(
+              //js.Array(paletteMsgBytes, paletteBytes),
+              js.Array(paletteMsgBytes, paletteBytes)
+            )
+        }
+
       case _ => println("Worker received unknown message type.")
     }
   }
