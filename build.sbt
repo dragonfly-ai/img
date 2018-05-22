@@ -25,6 +25,7 @@ val img = crossProject.settings(
 ).jsSettings(
   // JS-specific settings here
   jsDependencies += RuntimeDOM
+
 ).jvmSettings(
   // JVM-specific settings here
   libraryDependencies += "org.scala-js" %% "scalajs-stubs" % scalaJSVersion % "provided"

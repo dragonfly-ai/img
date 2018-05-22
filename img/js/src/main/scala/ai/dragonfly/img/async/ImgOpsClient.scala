@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import ai.dragonfly.color.ColorPalette
 import ai.dragonfly.distributed.Snowflake
-import ai.dragonfly.img.{ImageBasics, Img}
+import ai.dragonfly.img.{Img, ImgAsync, ImgCommon}
 import org.scalajs.dom
 import org.scalajs.dom.raw.{Transferable, Worker}
 
@@ -28,157 +28,376 @@ import ai.dragonfly.img.async.ImgOpsTransferable._
 object ImgOpsClient {
 
   // lazy because the user may not want to use asynchronous image processing.
-
   private lazy val imgOpsRegistry = new util.HashMap[Long, PromiseWrapper]()
 
   private lazy val imgWorker = new Worker("ImgWorker.js")
 
-  imgWorker.addEventListener( // handle messages from the worker
+  // handle messages from the worker
+  imgWorker.addEventListener(
     "message",
     (msg: dom.MessageEvent) => {
       msg.data match {
         case s: String => println(s)
-        case jsArr: js.Array[_] =>
+        case jsArr: js.Array[Transferable] =>
           val bytes: ByteBuffer = jsArr(0).asInstanceOf[ArrayBuffer]
-          val msg = Unpickle[ImgOpsTransferable].fromBytes(bytes)
-          println(s"Client received message: $msg")
-          imgOpsRegistry.get(msg.id) match {
-            case ipw: ImgPromise =>
-              val imgResult: Img = msg.asInstanceOf[ImgMsg](jsArr)
-              ipw.p.success(imgResult)
-            case ppw: PalettePromise =>
-              val paletteResult: ColorPalette = msg.asInstanceOf[PaletteMsg](jsArr)
-              ppw.p.success(paletteResult)
+
+          val iotMsg = Unpickle[ImgOpsTransferable].fromBytes(bytes)
+
+          println ( s"Client received msg: $iotMsg with ${jsArr(1)}" )
+
+          val id = iotMsg match {
+            case b: Boomerang => b.paramRecoveryId
+            case d: Dart[_] => d.resultId
+          }
+
+          imgOpsRegistry.get(id) match {
+            case pw: PromiseWrapper =>
+              pw(iotMsg, jsArr) // fulfill the promise
+              imgOpsRegistry.remove(id) // remove the promise from the registry.
+            case _ => println(s"Unexpected message: $iotMsg $imgOpsRegistry")
           }
         case _ => println("Client received unknown message type.")
       }
     }
   )
 
-  def apply(msg: ImgOpsMsg[_], transferList: js.Array[Transferable] = js.Array[Transferable]()): Future[_] = {
-    //val promise = Promise[ImgOpsMsg]
-    val promiseWrapper: PromiseWrapper = msg.promiseWrapper
-    imgOpsRegistry.put(msg.id, promiseWrapper)
-    println(msg)
+  // send messages to the worker
+  def apply(msg: Boomerang, transferList: js.Array[Transferable] = js.Array[Transferable]()): Future[_] = {
+    //println(s"ImgOpsClient: $msg")
+    val resultPromiseWrapper: PromiseWrapper = msg.promiseWrapper
+    imgOpsRegistry.put(msg.resultId, resultPromiseWrapper)
+    //println(s"imgOpsRegistry: $imgOpsRegistry")
+
     val bytes: ArrayBuffer = Pickle.intoBytes(msg.asInstanceOf[ImgOpsTransferable])
     val msgPayload = js.Array[Any](bytes)
 
     for (t <- transferList) msgPayload.push(t)
+    //println(msgPayload)
     imgWorker.postMessage(msgPayload, transferList)
-    println(msgPayload)
-    promiseWrapper.p.future
+
+    resultPromiseWrapper.p.future
   }
 
+  // recovers transferable data sent as parameters to image operations
+  def recoverParamsFor(msg: Boomerang): Future[js.Array[Transferable]] = {
+    val paramReturnPromiseWrapper: PromiseWrapper = ParamPromise(Promise[js.Array[Transferable]])
+    imgOpsRegistry.put(msg.paramRecoveryId, paramReturnPromiseWrapper)
+    paramReturnPromiseWrapper.p.future.asInstanceOf[Future[js.Array[Transferable]]]
+  }
 
-  // handle asynch image processing operations from javascript.
-  def jsCallbackHandler(imgFuture: Future[Img], callback: js.Function1[Img, Any]): Unit = {
+  // Expose asynchronous image processing operations that return Img to javascript.
+  def jsCallBackImgHandler(imgFuture: Future[ImgAsync], callback: js.Function1[ImgAsync, Any]): Unit = {
     imgFuture onComplete {
-      case scala.util.Success(img: Img) =>
-        println("response.img dimensions: " + img.width + " " + img.height)
+      case Success(img: ImgAsync) =>
         callback(img)
-      case scala.util.Success(_) => println("Unexpected response: " + _)
+      case Success(_) => println("Unexpected response: " + _)
       case Failure(t) => println("failed" + t)
     }
+  }
+
+  // Expose asynchronous image processing operations that return Unit to javascript.
+  def jsCallBackUnitHandler(img: ImgAsync, unitFuture: Future[js.Array[Transferable]], callback: js.Function1[ImgAsync, Any]): Unit = {
+    unitFuture onComplete {
+      case Success(parameters: js.Array[Transferable]) => callback(img)
+      case Failure(t) => println("failed" + t)
+    }
+  }
+
+  // Handle asynchronous image processing operations that mutate the original image data.
+  def mutate1(msg: Boomerang, img: ImgAsync): Future[js.Array[Transferable]] = {
+    val resultPromise = Promise[js.Array[Transferable]]
+
+    for {
+      pd <- img.checkOutPixelData
+      parameters <- ImgOpsClient(msg, js.Array[Transferable](pd.buffer)).asInstanceOf[Future[js.Array[Transferable]]]
+    } yield {
+      img.checkInPixelData(ImgOpsTransferable.jsArrToImg(img.width, parameters).pixelData)
+      resultPromise.success(parameters)
+    }
+
+    resultPromise.future
+  }
+
+  // Handle asynchronous image processing operations that mutate the original image data and take two img parameters.
+  def mutate2(msg: Boomerang, img1: ImgAsync, img2: ImgAsync): Future[js.Array[Transferable]] = {
+    val resultPromise = Promise[js.Array[Transferable]]
+
+    for {
+      pd1 <- img1.checkOutPixelData
+      pd2 <- img2.checkOutPixelData
+      parameters <- ImgOpsClient(msg, js.Array[Transferable](pd1.buffer, pd2.buffer)).asInstanceOf[Future[js.Array[Transferable]]]
+    } yield {
+      img1.checkInPixelData(ImgOpsTransferable.jsArrToImg(img1.width, parameters, 1).pixelData)
+      img2.checkInPixelData(ImgOpsTransferable.jsArrToImg(img2.width, parameters, 2).pixelData)
+      resultPromise.success(parameters)
+    }
+
+    resultPromise.future
+  }
+
+  // Handle immutable asynchronous image processing operations that return new image data.
+  def spawn0(msg: Boomerang): Future[ImgAsync] = {
+    val resultPromise = Promise[ImgAsync]
+
+    for {
+      img <- ImgOpsClient(msg, js.Array[Transferable]()).asInstanceOf[Future[Img]]
+    } yield {
+      println(s"spawn0 $msg with $img")
+      resultPromise.success( new ImgAsync(img.width, img.pixelData) )
+    }
+
+    resultPromise.future
+  }
+
+  // Handle immutable asynchronous image processing operations that return new image data.
+  def spawn1(msg: Boomerang, img: ImgAsync): Future[ImgAsync] = {
+    val resultPromise = Promise[ImgAsync]
+
+    for {
+      pd <- img.checkOutPixelData
+      img <- ImgOpsClient(msg, js.Array[Transferable](pd.buffer)).asInstanceOf[Future[Img]]
+    } yield resultPromise.success( new ImgAsync(img.width, img.pixelData) )
+
+    ImgOpsClient recoverParamsFor msg onComplete {
+      case Success(parameters: js.Array[_]) =>
+        img.checkInPixelData(ImgOpsTransferable.jsArrToImg(img.width, parameters).pixelData)
+      case Failure(t) => println(s"Could not recover parameters for $msg")
+    }
+
+    resultPromise.future
+  }
+
+  def spawn2(msg: Boomerang, img1: ImgAsync, img2: ImgAsync): Future[ImgAsync] = {
+    val resultPromise = Promise[ImgAsync]
+
+    for {
+      pd1 <- img1.checkOutPixelData
+      pd2 <- img2.checkOutPixelData
+      img <- ImgOpsClient(
+        msg,
+        js.Array[Transferable](
+          pd1.buffer,
+          pd2.buffer
+        )
+      ).asInstanceOf[Future[Img]]
+    } yield {
+      resultPromise.success(new ImgAsync(img))
+    }
+
+    ImgOpsClient recoverParamsFor msg onComplete {
+      case Success(parameters: js.Array[_]) =>
+        img1.checkInPixelData(ImgOpsTransferable.jsArrToImg(img1.width, parameters, 1).pixelData)
+        img2.checkInPixelData(ImgOpsTransferable.jsArrToImg(img2.width, parameters, 2).pixelData)
+      case Failure(t) => println(s"Could not recover parameters for $msg")
+    }
+
+    resultPromise.future
   }
 
   // operations:
-  def randomizeRGB(img: Img): Future[Img] = ImgOpsClient(RandomRgbMsg(Snowflake(), img.width, img.height)).asInstanceOf[Future[Img]]
-  @JSExport def randomizeRGB(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(randomizeRGB(img), callback)
+  def randomizeRGB(width: Int, height: Int): Future[ImgAsync] = spawn0 (
+    RandomRgbMsg(Snowflake(), Snowflake(), width, height)
+  )
+  @JSExport def randomizeRGB(width: Int, height: Int, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackImgHandler(randomizeRGB(width, height), callback)
 
-  def flipHorizontal(img: Img): Future[Img] = ImgOpsClient(FlipHorizontalMsg(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def flipHorizontal(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(flipHorizontal(img), callback)
+  def randomizeLab(width: Int, height: Int): Future[ImgAsync] = spawn0 (
+    RandomLabMsg(Snowflake(), Snowflake(), width, height)
+  )
+  @JSExport def randomizeLab(width: Int, height: Int, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackImgHandler(randomizeLab(width, height), callback)
 
-  def flipVertical(img: Img): Future[Img] = ImgOpsClient(FlipVerticalMsg(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def flipVertical(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(flipVertical(img), callback)
+  def flipHorizontal(img: ImgAsync): Future[ImgAsync] = spawn1 ( FlipHorizontalMsg( Snowflake(), Snowflake(), img.width ), img )
+  @JSExport def flipHorizontal(img: ImgAsync, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackImgHandler(flipHorizontal(img), callback)
 
-  def rotate90Degrees(img: Img, counterClockwise: Boolean = false): Future[Img] = ImgOpsClient(Rotate90DegreesMsg(Snowflake(), img.width, counterClockwise), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def rotate90Degrees(img: Img, counterClockwise: Boolean, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(rotate90Degrees(img, counterClockwise), callback)
 
-  def rotate180Degrees(img: Img): Future[Img] = ImgOpsClient(Rotate180DegreesMsg(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def rotate180Degrees(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(rotate180Degrees(img), callback)
+  def flipVertical(img: ImgAsync): Future[ImgAsync] = spawn1 ( FlipVerticalMsg( Snowflake(), Snowflake(), img.width ), img )
+  @JSExport def flipVertical(img: ImgAsync, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackImgHandler(flipVertical(img), callback)
 
-  def rotateDegrees(img: Img, angleDegrees: Double): Future[Img] = ImgOpsClient(RotateDegreesMsg(Snowflake(), img.width, angleDegrees), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def rotateDegrees(img1: Img, angleDegrees: Double, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(rotateDegrees(img1, angleDegrees), callback)
+  def rotate90Degrees(img: ImgAsync, counterClockwise: Boolean = false): Future[ImgAsync] = spawn1 (
+    Rotate90DegreesMsg(Snowflake(), Snowflake(), img.width, counterClockwise),
+    img
+  )
+  @JSExport def rotate90Degrees(img: ImgAsync, counterClockwise: Boolean, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackImgHandler(rotate90Degrees(img, counterClockwise), callback)
 
-  def rotateRadians(img: Img, angleRadians: Double): Future[Img] = ImgOpsClient(RotateRadiansMsg(Snowflake(), img.width, angleRadians), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def rotateRadians(img1: Img, angleRadians: Double, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(rotateRadians(img1, angleRadians), callback)
+  def rotate180Degrees(img: ImgAsync): Future[ImgAsync] = spawn1 (
+    Rotate180DegreesMsg(Snowflake(), Snowflake(), img.width),
+    img
+  )
+  @JSExport def rotate180Degrees(img: ImgAsync, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackImgHandler(rotate180Degrees(img), callback)
+
+  def rotateDegrees(img: ImgAsync, angleDegrees: Double): Future[ImgAsync] = spawn1 (
+    RotateDegreesMsg(Snowflake(), Snowflake(), img.width, angleDegrees),
+    img
+  )
+  @JSExport def rotateDegrees(img1: ImgAsync, angleDegrees: Double, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackImgHandler(rotateDegrees(img1, angleDegrees), callback)
+
+  def rotateRadians(img: ImgAsync, angleRadians: Double): Future[ImgAsync] = spawn1 (
+    RotateRadiansMsg(Snowflake(), Snowflake(), img.width, angleRadians),
+    img
+  )
+  @JSExport def rotateRadians(img1: ImgAsync, angleRadians: Double, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackImgHandler(rotateRadians(img1, angleRadians), callback)
 
   def overlay(
-    bgImg: Img, fgImg: Img,
+    bgImg: ImgAsync, fgImg: ImgAsync,
     bgX: Int, bgY: Int, fgX: Int, fgY: Int,
     width: Int, height: Int
-  ): Future[Img] = {
-    ImgOpsClient(
-      OverlayMsg(Snowflake(), bgImg.width, fgImg.width, bgX, bgY, fgX, fgY, width, height),
-      js.Array[Transferable](bgImg.pixelData.buffer, fgImg.pixelData.buffer)
-    ).asInstanceOf[Future[Img]]
-  }
+  ): Future[js.Array[Transferable]] = mutate2 (
+    OverlayMsg(Snowflake(), Snowflake(), bgImg.width, fgImg.width, bgX, bgY, fgX, fgY, width, height),
+    bgImg, fgImg
+  )
   @JSExport def overlay(
-    bgImg: Img, fgImg: Img,
+    bgImg: ImgAsync, fgImg: ImgAsync,
     bgX: Int, bgY: Int, fgX: Int, fgY: Int,
     width: Int, height: Int,
-    callback: js.Function1[Img, Any]
-  ): Unit = jsCallbackHandler(overlay(bgImg, fgImg, bgX, bgY, fgX, fgY, width, height), callback)
+    callback: js.Function1[ImgAsync, Any]
+  ): Unit = jsCallBackUnitHandler( bgImg, overlay( bgImg, fgImg, bgX, bgY, fgX, fgY, width, height ), callback )
 
-  def differenceMatte(img1: Img, img2: Img): Future[Img] = ImgOpsClient(DifferenceMatteMsg(Snowflake(), img1.width, img2.width), js.Array[Transferable](img1.pixelData.buffer, img2.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def differenceMatte(img1: Img, img2: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(differenceMatte(img1, img2), callback)
-
-
-  def epanechnikovBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(EpanechnikovBlurRGBMsg(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def epanechnikovBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(epanechnikovBlurRGB(img, radius), callback)
-
-  def uniformBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(UniformBlurRGBMsg(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def uniformBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(uniformBlurRGB(img, radius), callback)
-
-  def gaussianBlurRGB(img: Img, radius: Int): Future[Img] = ImgOpsClient(GaussianBlurRGBMsg(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def gaussianBlurRGB(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(gaussianBlurRGB(img, radius), callback)
-
-  def unsharpenMaskRGB(img: Img, radius: Int, amount: Double, threshold: Int): Future[Img] = ImgOpsClient(UnsharpenMaskRGBMsg(Snowflake(), img.width, radius, amount, threshold), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def unsharpenMaskRGB(img: Img, radius: Int, amount: Double, threshold: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(unsharpenMaskRGB(img, radius, amount, threshold), callback)
-
-  def unsharpenMaskLAB(img: Img, radius: Int, amount: Double, threshold: Int): Future[Img] = ImgOpsClient(UnsharpenMaskLABMsg(Snowflake(), img.width, radius, amount, threshold), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def unsharpenMaskLAB(img: Img, radius: Int, amount: Double, threshold: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(unsharpenMaskLAB(img, radius, amount, threshold), callback)
-
-  def median(img: Img, radius: Int): Future[Img] = ImgOpsClient(MedianMsg(Snowflake(), img.width, radius), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def median(img: Img, radius: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(median(img, radius), callback)
+  def differenceMatte(img1: ImgAsync, img2: ImgAsync): Future[ImgAsync] = spawn2 (
+    DifferenceMatteMsg(Snowflake(), Snowflake(), img1.width, img2.width),
+    img1, img2
+  )
+  @JSExport def differenceMatte(img1: ImgAsync, img2: ImgAsync, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackImgHandler(differenceMatte(img1, img2), callback)
 
 
-  def grayscaleAverageRGB(img: Img): Future[Img] = ImgOpsClient(GrayscaleAverageRGBMSG(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def grayscaleAverageRGB(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(grayscaleAverageRGB(img), callback)
+  def epanechnikovBlurRGB(img: ImgAsync, radius: Int): Future[js.Array[Transferable]] = mutate1 (
+    EpanechnikovBlurRGBMsg(Snowflake(), img.width, radius),
+    img
+  )
+  @JSExport def epanechnikovBlurRGB(img: ImgAsync, radius: Int, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackUnitHandler(img, epanechnikovBlurRGB(img, radius), callback)
 
-  def grayscaleLABIntensity(img: Img): Future[Img] = ImgOpsClient(GrayscaleLABIntensityMSG(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def grayscaleLABIntensity(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(grayscaleLABIntensity(img), callback)
+  def uniformBlurRGB(img: ImgAsync, radius: Int): Future[js.Array[Transferable]] = mutate1 (
+    UniformBlurRGBMsg(Snowflake(), img.width, radius),
+    img
+  )
+  @JSExport def uniformBlurRGB(img: ImgAsync, radius: Int, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackUnitHandler(img, uniformBlurRGB(img, radius), callback)
 
-  def equalizeRGB(img: Img): Future[Img] = ImgOpsClient(EqualizeRGBMSG(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def equalizeRGB(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(equalizeRGB(img), callback)
+  def gaussianBlurRGB(img: ImgAsync, radius: Int): Future[js.Array[Transferable]] = mutate1 (
+    GaussianBlurRGBMsg(Snowflake(), img.width, radius),
+    img
+  )
+  @JSExport def gaussianBlurRGB(img: ImgAsync, radius: Int, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackUnitHandler(img, gaussianBlurRGB(img, radius), callback)
 
-  def negative(img: Img): Future[Img] = ImgOpsClient(NegativeMSG(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def negative(img: Img, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(negative(img), callback)
+  def unsharpenMaskRGB(img: ImgAsync, radius: Int, amount: Double, threshold: Int): Future[js.Array[Transferable]] = mutate1 (
+    UnsharpenMaskRGBMsg(Snowflake(), img.width, radius, amount, threshold),
+    img
+  )
+  @JSExport def unsharpenMaskRGB(img: ImgAsync, radius: Int, amount: Double, threshold: Int, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackUnitHandler(img, unsharpenMaskRGB(img, radius, amount, threshold), callback)
 
-  def thresholdRGB(img: Img, intensity: Int): Future[Img] = ImgOpsClient(ThresholdRGBMsg(Snowflake(), img.width, intensity), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def thresholdRGB(img: Img, intensity: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(thresholdRGB(img, intensity), callback)
+  def unsharpenMaskLAB(img: ImgAsync, radius: Int, amount: Double, threshold: Int): Future[js.Array[Transferable]] = mutate1 (
+    UnsharpenMaskLABMsg(Snowflake(), img.width, radius, amount, threshold),
+    img
+  )
+  @JSExport def unsharpenMaskLAB(img: ImgAsync, radius: Int, amount: Double, threshold: Int, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackUnitHandler(img, unsharpenMaskLAB(img, radius, amount, threshold), callback)
 
-  def thresholdLab(img: Img, intensityRGB: Int): Future[Img] = ImgOpsClient(ThresholdLabMsg(Snowflake(), img.width, intensityRGB), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def thresholdLab(img: Img, intensityRGB: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(thresholdLab(img, intensityRGB), callback)
+  def median(img: ImgAsync, radius: Int): Future[ImgAsync] = spawn1 (
+    MedianMsg(Snowflake(), Snowflake(), img.width, radius),
+    img
+  )
+  @JSExport def median(img: ImgAsync, radius: Int, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackImgHandler(median(img, radius), callback)
 
-  def contrast(img: Img, intensityRGB: Int): Future[Img] = ImgOpsClient(ContrastMsg(Snowflake(), img.width, intensityRGB), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def contrast(img: Img, intensityRGB: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(contrast(img, intensityRGB), callback)
 
-  def brightness(img: Img, brightnessDifferential: Int): Future[Img] = ImgOpsClient(BrightnessMsg(Snowflake(), img.width, brightnessDifferential), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def brightness(img: Img, brightnessDifferential: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(brightness(img, brightnessDifferential), callback)
+  def grayscaleAverageRGB(img: ImgAsync): Future[js.Array[Transferable]] = mutate1 (
+    GrayscaleAverageRGBMSG(Snowflake(), img.width),
+    img
+  )
+  @JSExport def grayscaleAverageRGB(img: ImgAsync, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackUnitHandler(img, grayscaleAverageRGB(img), callback)
 
-  def scale(img: Img, newWidth: Int, newHeight: Int): Future[Img] = ImgOpsClient(ScaleMsg(Snowflake(), img.width, newWidth, newHeight), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[Img]]
-  @JSExport def scale(img1: Img, newWidth: Int, newHeight: Int, callback: js.Function1[Img, Any]): Unit = jsCallbackHandler(scale(img1, newWidth, newHeight), callback)
+  def grayscaleLABIntensity(img: ImgAsync): Future[js.Array[Transferable]] = mutate1 (
+    GrayscaleLABIntensityMSG(Snowflake(), img.width),
+    img
+  )
+  @JSExport def grayscaleLABIntensity(img: ImgAsync, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackUnitHandler(img, grayscaleLABIntensity(img), callback)
 
-  def concisePalette(img: Img): Future[ColorPalette] = ImgOpsClient(ConcisePaletteMsg(Snowflake(), img.width), js.Array[Transferable](img.pixelData.buffer)).asInstanceOf[Future[ColorPalette]]
-  @JSExport def concisePalette(img1: Img, callback: js.Function1[ColorPalette, Any]): Unit = {
+  def equalizeRGB(img: ImgAsync): Future[js.Array[Transferable]] = mutate1 (
+    EqualizeRGBMSG(Snowflake(), img.width),
+    img
+  )
+  @JSExport def equalizeRGB(img: ImgAsync, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackUnitHandler(img, equalizeRGB(img), callback)
+
+  def negative(img: ImgAsync): Future[js.Array[Transferable]] = mutate1 (
+    NegativeMSG(Snowflake(), img.width),
+    img
+  )
+  @JSExport def negative(img: ImgAsync, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackUnitHandler(img, negative(img), callback)
+
+  def thresholdRGB(img: ImgAsync, intensity: Int): Future[js.Array[Transferable]] = mutate1 (
+    ThresholdRGBMsg(Snowflake(), img.width, intensity),
+    img
+  )
+  @JSExport def thresholdRGB(img: ImgAsync, intensity: Int, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackUnitHandler(img, thresholdRGB(img, intensity), callback)
+
+  def thresholdLab(img: ImgAsync, intensityRGB: Int): Future[js.Array[Transferable]] = mutate1 (
+    ThresholdLabMsg(Snowflake(), img.width, intensityRGB),
+    img
+  )
+  @JSExport def thresholdLab(img: ImgAsync, intensityRGB: Int, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackUnitHandler(img, thresholdLab(img, intensityRGB), callback)
+
+  def contrast(img: ImgAsync, intensityRGB: Int): Future[js.Array[Transferable]] = mutate1 (
+    ContrastMsg(Snowflake(), img.width, intensityRGB),
+    img
+  )
+  @JSExport def contrast(img: ImgAsync, intensityRGB: Int, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackUnitHandler(img, contrast(img, intensityRGB), callback)
+
+  def brightness(img: ImgAsync, brightnessDifferential: Int): Future[js.Array[Transferable]] = mutate1 (
+    BrightnessMsg(Snowflake(), img.width, brightnessDifferential),
+    img
+  )
+  @JSExport def brightness(img: ImgAsync, brightnessDifferential: Int, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackUnitHandler(img, brightness(img, brightnessDifferential), callback)
+
+  def scale(img: ImgAsync, newWidth: Int, newHeight: Int): Future[ImgAsync] = spawn1 (
+    ScaleMsg(Snowflake(), Snowflake(), img.width, newWidth, newHeight),
+    img
+  )
+  @JSExport def scale(img1: ImgAsync, newWidth: Int, newHeight: Int, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackImgHandler(scale(img1, newWidth, newHeight), callback)
+
+  def concisePalette(img: ImgAsync): Future[ColorPalette] = {
+    val msg = ConcisePaletteMsg(Snowflake(), Snowflake(), img.width)
+    val resultPromise = Promise[ColorPalette]
+
+    for {
+      pd <- img.checkOutPixelData
+      cp: ColorPalette <- ImgOpsClient(msg, js.Array[Transferable](pd.buffer)).asInstanceOf[Future[ColorPalette]]
+    } yield {
+
+      resultPromise.success(cp)
+    }
+
+    ImgOpsClient recoverParamsFor msg onComplete {
+      case Success(parameters: js.Array[_]) =>
+        img.checkInPixelData(ImgOpsTransferable.jsArrToImg(img.width, parameters).pixelData)
+      case Failure(t) => println(s"Could not recover parameters for $msg")
+    }
+
+    resultPromise.future
+  }
+  @JSExport def concisePalette(img1: ImgAsync, callback: js.Function1[ColorPalette, Any]): Unit = {
     concisePalette(img1) onComplete {
-      case scala.util.Success(palette: ColorPalette) =>
-        println(s"ColorPalette Size: ${palette.colorFrequencies.size}")
-        callback(palette)
+      case scala.util.Success(palette: ColorPalette) => callback(palette)
       case scala.util.Success(_) => println("Unexpected response: " + _)
       case Failure(t) => println("failed" + t)
     }
   }
+
+  def projectToPalette(palette: ColorPalette, img: ImgAsync): Future[js.Array[Transferable]] = {
+    val msg = ProjectToPaletteMsg(Snowflake(), img.width)
+
+    val resultPromise = Promise[js.Array[Transferable]]
+
+    for {
+      pd <- img.checkOutPixelData
+      parameters <- ImgOpsClient(
+        msg,
+        js.Array[Transferable](
+          ImgOpsTransferable.colorPaletteToBytes(palette),  // the palette
+          pd.buffer // the image
+        )
+      ).asInstanceOf[Future[js.Array[Transferable]]]
+    } yield {
+      img.checkInPixelData(ImgOpsTransferable.jsArrToImg(img.width, parameters, 2).pixelData)
+      resultPromise.success(parameters)
+    }
+
+    resultPromise.future
+  }
+  @JSExport def projectToPalette(palette: ColorPalette, img: ImgAsync, callback: js.Function1[ImgAsync, Any]): Unit = jsCallBackUnitHandler(img, projectToPalette(palette, img), callback)
 
 }

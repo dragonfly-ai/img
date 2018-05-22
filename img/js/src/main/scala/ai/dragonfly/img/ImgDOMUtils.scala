@@ -8,6 +8,9 @@ import org.scalajs.dom.raw.HTMLImageElement
 import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.typedarray.Uint8ClampedArray
 import scalatags.JsDom.all._
+import scala.concurrent.ExecutionContext.Implicits.global
+
+import scala.scalajs.js
 
 /**
  * Created by clifton on 12/31/16.
@@ -30,7 +33,6 @@ object ImgDOMUtils {
   }
 
   @JSExport def renderToCanvas(img: Img, canvas: Canvas): Canvas = {
-    println("renderToCanvas")
 
     val imgDat = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D].getImageData(0, 0, img.width, img.height)
     val data: Uint8ClampedArray = imgDat.data.asInstanceOf[Uint8ClampedArray]
@@ -54,6 +56,17 @@ object ImgDOMUtils {
   @JSExport def toHtmlImage(canvas:Canvas): HTMLImageElement = imageElement(canvas.width, canvas.height, canvas.id, canvas.toDataURL("image/png"))
 
   @JSExport def toHtmlImage(img:Img): HTMLImageElement = toHtmlImage(toCanvas(img))
+
+  @JSExport def toHtmlImage(imgAsync: ImgAsync, callback: js.Function1[HTMLImageElement, Any]): Unit = {
+    for {
+      pd <- imgAsync.checkOutPixelData
+    } yield {
+      val imgT = new Img( imgAsync.width, pd )
+      println(imgT)
+      callback( toHtmlImage( toCanvas( imgT ) ) )
+      imgAsync.checkInPixelData(pd)
+    }
+  }
 
   private def imageDataToImg(imageData:ImageData): Img = {
     new Img(imageData.width, imageData.height).setUint8ClampedArray(
@@ -90,6 +103,10 @@ object ImgDOMUtils {
     )
   }
 
+  @JSExport def htmlImageElementToImgAsynch(htmlImageElement: HTMLImageElement): ImgAsync = {
+    val img = htmlImageElementToImg(htmlImageElement)
+    new ImgAsync(img.width, img.pixelData)
+  }
 
   @JSExport def blankImageData(width: Int, height: Int): ImageData = {
     canvasElement(width, height).getContext("2d").asInstanceOf[CanvasRenderingContext2D].getImageData(0, 0, width, height)

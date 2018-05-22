@@ -6,8 +6,10 @@ import ai.dragonfly.color._
 import scala.scalajs.js.annotation.{JSExportAll, JSExport}
 import scala.scalajs.js.typedarray.Uint8ClampedArray
 
+// How to make an asynchronous version of this?
+
 @JSExport
-class Img (@Override val width: Int, @JSExport val pixelData: Uint8ClampedArray) extends ImageBasics {
+class Img (@Override val width: Int, @JSExport val pixelData: Uint8ClampedArray) extends ImgCommon {
 
   @Override val height: Int = (pixelData.length / 4) / width
 
@@ -49,7 +51,7 @@ class Img (@Override val width: Int, @JSExport val pixelData: Uint8ClampedArray)
 
 
 
-  @Override def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): ImageBasics = {
+  @Override def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): ImgCommon = {
     val subImg = new Img(w, h)
     subImg pixels ((x:Int, y:Int) => subImg.setARGB(x, y, getARGB(xOffset + x, yOffset + y)))
     subImg
@@ -67,7 +69,7 @@ class Img (@Override val width: Int, @JSExport val pixelData: Uint8ClampedArray)
     arr
   }
 
-  @Override def setIntArray(startX: Int, startY: Int, w: Int, h: Int, rgba: Array[Int], offset: Int, stride: Int): ImageBasics = {
+  @Override def setIntArray(startX: Int, startY: Int, w: Int, h: Int, rgba: Array[Int], offset: Int, stride: Int): ImgCommon = {
     var workingOffset = offset
 
     for (y <- startY until startY + h) {
@@ -99,7 +101,7 @@ class Img (@Override val width: Int, @JSExport val pixelData: Uint8ClampedArray)
     arr
   }
 
-  @Override def setUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): ImageBasics = {
+  @Override def setUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): ImgCommon = {
     var workingOffset = 0
 
     for (y <- startY until startY + h) {
@@ -120,5 +122,8 @@ class Img (@Override val width: Int, @JSExport val pixelData: Uint8ClampedArray)
 
   @JSExport def asUint8ClampedArray: Uint8ClampedArray = pixelData
 
-  @Override override def copy(): ImageBasics = getSubImage(0, 0, width, height)
+  @Override override def copy(): ImgCommon = getSubImage(0, 0, width, height)
+
+  @Override override def toString(): String = s"Img($width X $height)"
+
 }

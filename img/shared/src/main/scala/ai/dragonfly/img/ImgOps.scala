@@ -9,37 +9,37 @@ import ai.dragonfly.spatial.PointRegionOctree
 
 import scala.collection.immutable.HashMap
 import scala.collection.mutable
-import scala.collection.parallel.immutable
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
 @JSExportTopLevel("ai.dragonfly.imgImgOps")
 object ImgOps {
 
-  @JSExport def randomizeRGB(img: ImageBasics): ImageBasics = {
+  @JSExport def randomizeRGB(img: ImgCommon): ImgCommon = {
     img pixels ( (x: Int, y: Int) => img.setARGB( x, y, Color.random().argb ) )
-    img
   }
 
-  @JSExport def flipHorizontal(img: ImageBasics): ImageBasics = {
-    val flipped: ImageBasics = new Img(img.width, img.height)
+  @JSExport def randomizeLab(img: ImgCommon): ImgCommon = {
+    img pixels ( (x: Int, y: Int) => img.setARGB( x, y, Color.randomFromLabSpace() ) )
+  }
+
+  @JSExport def flipHorizontal(img: ImgCommon): ImgCommon = {
+    val flipped: ImgCommon = new Img(img.width, img.height)
     val end:Int = img.width - 1
     flipped pixels ((x: Int, y: Int) => {
       flipped.setARGB( x, y, img.getARGB(end - x, y) )
     })
-    flipped
   }
 
-  @JSExport def flipVertical(img: ImageBasics): ImageBasics = {
-    val flipped: ImageBasics = new Img(img.width, img.height)
+  @JSExport def flipVertical(img: ImgCommon): ImgCommon = {
+    val flipped: ImgCommon = new Img(img.width, img.height)
     val end:Int = img.height - 1
-    img pixels ((x: Int, y: Int) => {
+    flipped pixels ((x: Int, y: Int) => {
       flipped.setARGB( x, y, img.getARGB(x, end - y) )
     })
-    flipped
   }
 
-  @JSExport def rotate90Degrees(img: ImageBasics, counterClockwise: Boolean = false): ImageBasics = {
-    val rotated: ImageBasics = new Img(img.height, img.width)
+  @JSExport def rotate90Degrees(img: ImgCommon, counterClockwise: Boolean = false): ImgCommon = {
+    val rotated: ImgCommon = new Img(img.height, img.width)
     val rotationFunction = if (counterClockwise) {
       val endY:Int = img.width - 1; (x: Int, y: Int) => rotated.setARGB(x, y, img.getARGB(endY - y, x))
     } else {
@@ -48,19 +48,19 @@ object ImgOps {
     rotated pixels rotationFunction
   }
 
-  @JSExport def rotate180Degrees (img: ImageBasics): ImageBasics = {
-    val rotated: ImageBasics = new Img(img.width, img.height)
+  @JSExport def rotate180Degrees (img: ImgCommon): ImgCommon = {
+    val rotated: ImgCommon = new Img(img.width, img.height)
     val endX: Int = img.width - 1
     val endY: Int = img.height - 1
     rotated pixels ((x: Int, y: Int) => rotated.setARGB(x, y, img.getARGB(endX - x, endY - y)))
   }
 
   @JSExport def overlay(
-    bgImg: ImageBasics,
-    fgImg: ImageBasics,
-    bgX: Int, bgY: Int, fgX: Int, fgY: Int,
-    width: Int, height: Int
-  ): ImageBasics = {
+                         bgImg: ImgCommon,
+                         fgImg: ImgCommon,
+                         bgX: Int, bgY: Int, fgX: Int, fgY: Int,
+                         width: Int, height: Int
+  ): ImgCommon = {
     for (y <- 0 until height) {
       for (x <- 0 until width) {
         val fgc: RGBA = fgImg.getARGB(fgX + x, fgY + y)
@@ -72,14 +72,14 @@ object ImgOps {
   }
 
 
-  @JSExport def epanechnikovBlurRGB(toBlur: ImageBasics, radius: Int): ImageBasics = kernelBlurRGB(toBlur, EpanechnikovKernel(radius))
+  @JSExport def epanechnikovBlurRGB(toBlur: ImgCommon, radius: Int): ImgCommon = kernelBlurRGB(toBlur, EpanechnikovKernel(radius))
 
-  @JSExport def uniformBlurRGB(toBlur: ImageBasics, radius: Int): ImageBasics = kernelBlurRGB(toBlur, UniformKernel(radius))
+  @JSExport def uniformBlurRGB(toBlur: ImgCommon, radius: Int): ImgCommon = kernelBlurRGB(toBlur, UniformKernel(radius))
 
-  @JSExport def gaussianBlurRGB(toBlur: ImageBasics, radius: Int): ImageBasics = kernelBlurRGB(toBlur, GaussianKernel(radius))
+  @JSExport def gaussianBlurRGB(toBlur: ImgCommon, radius: Int): ImgCommon = kernelBlurRGB(toBlur, GaussianKernel(radius))
 
 
-  @JSExport def kernelBlurRGB(toBlur: ImageBasics, kernel: Kernel): ImageBasics = {
+  @JSExport def kernelBlurRGB(toBlur: ImgCommon, kernel: Kernel): ImgCommon = {
     val dk = kernel.discretize
 
     val width:Int = toBlur.width
@@ -112,13 +112,11 @@ object ImgOps {
       toBlur.setARGB(x, y, RGBA(avg.x.toInt, avg.y.toInt, avg.z.toInt).argb)
       vectorStats.reset()
     })
-
-    toBlur
   }
 
   def clamp(i: Double): Int = Math.max(Math.min(255, i), 0).toInt
 
-  @JSExport def unsharpenMaskRGB(img: ImageBasics, radius: Int, amount: Double, threshold: Int = 0): ImageBasics = {
+  @JSExport def unsharpenMaskRGB(img: ImgCommon, radius: Int, amount: Double, threshold: Int = 0): ImgCommon = {
     //sharpened = original + (original − blurred) × amount
     val t2 = threshold * threshold
     val blurred = gaussianBlurRGB(img.copy(), radius)
@@ -145,11 +143,9 @@ object ImgOps {
 
       img.setARGB(x, y, RGBA(r, g, b, oc.alpha))
     })
-    img
-
   }
 
-  @JSExport def unsharpenMaskLAB(img: ImageBasics, radius: Int, amount: Double, threshold: Int = 0): ImageBasics = {
+  @JSExport def unsharpenMaskLAB(img: ImgCommon, radius: Int, amount: Double, threshold: Int = 0): ImgCommon = {
     val t2 = threshold * threshold
     val blurred = gaussianBlurRGB(img.copy(), radius)
 
@@ -166,8 +162,6 @@ object ImgOps {
       val c = SlowSlimLab(l1.toFloat, oc.a, oc.b).argb
       img.setARGB(x, y, RGBA(c.red, c.green, c.blue, oc.alpha))
     })
-    img
-
   }
 
   /*
@@ -179,14 +173,14 @@ object ImgOps {
 
    */
 
-  @JSExport def differenceMatte(img1: ImageBasics, img2: ImageBasics): ImageBasics = {
+  @JSExport def differenceMatte(img1: ImgCommon, img2: ImgCommon): ImgCommon = {
 
     val fitted = if ( img1.width != img2.width || img1.height != img2.height ) scale(img2, img1.width, img2.height)
     else img2
 
-    val comparison = new Img( fitted.width,  fitted.height )
+    val comparison: ImgCommon = new Img( fitted.width,  fitted.height )
 
-    img1 pixels ((x: Int, y: Int) => {
+    comparison pixels ((x: Int, y: Int) => {
       val c1: RGBA = img1.getARGB( x, y )
       val c2: RGBA = fitted.getARGB( x, y )
 
@@ -194,20 +188,17 @@ object ImgOps {
       val dif = RGBA( Math.abs ( c1.red - c2.red ), Math.abs( c1.green - c2.green ), Math.abs ( c1.blue - c2.blue ) )
       comparison.setARGB(x, y, dif)
     })
-
-    comparison
-
   }
 
   // scale images.  Bilinear interpolation
 
-  @JSExport def scale(img: ImageBasics, newWidth: Int, newHeight: Int ): ImageBasics = {
+  @JSExport def scale(img: ImgCommon, newWidth: Int, newHeight: Int ): ImgCommon = {
 
     if (newWidth >= img.width && newHeight >= img.height) { // Bilinear interpolation to scale image up.
       val scaleX: Double = img.width / newWidth.toDouble
       val scaleY: Double = img.height / newHeight.toDouble
 
-      val scaled: ImageBasics = new Img(newWidth, newHeight)
+      val scaled: ImgCommon = new Img(newWidth, newHeight)
 
       scaled pixels ((u: Int, v: Int) => {
         val u1 = scaleX * u
@@ -237,7 +228,6 @@ object ImgOps {
 
         scaled.setARGB(u, v, RGBA(red, green, blue))
       })
-      scaled
     } else if (newWidth <= img.width && newHeight <= img.height) {  // sampling to shrink image
       val scaleX = newWidth.toDouble / img.width
       val scaleY = newHeight.toDouble / img.height
@@ -248,7 +238,7 @@ object ImgOps {
         statsImg((x * scaleX).toInt)((y * scaleY).toInt)(new VectorN(c.alpha, c.red, c.green, c.blue))
       })
 
-      val scaled: ImageBasics = new Img(newWidth, newHeight)
+      val scaled: ImgCommon = new Img(newWidth, newHeight)
       scaled pixels ((x: Int, y: Int) => {
         scaled.setARGB(x, y, {
           val v: Array[Double] = statsImg(x)(y).average().values
@@ -264,9 +254,9 @@ object ImgOps {
     }
   }
 
-  @JSExport def rotateDegrees(img: ImageBasics, angleDegrees: Double): ImageBasics = rotateRadians(img, angleDegrees * 0.01745329252)
+  @JSExport def rotateDegrees(img: ImgCommon, angleDegrees: Double): ImgCommon = rotateRadians(img, angleDegrees * 0.01745329252)
 
-  @JSExport def rotateRadians(img: ImageBasics, angleRadians: Double): ImageBasics = {
+  @JSExport def rotateRadians(img: ImgCommon, angleRadians: Double): ImgCommon = {
     // Step 1, assess canvas size for resulting image:
     val midpoint1 = new Vector2(img.width / 2.0, img.height / 2.0)
     val corners: Array[Vector2] = Array(
@@ -289,7 +279,7 @@ object ImgOps {
       maxY = Math.max(rotated.y, maxY)
     }
 
-    val rotated: ImageBasics = new Img(Math.sqrt(Math.pow(maxX - minX, 2)).toInt + 2, Math.sqrt(Math.pow(maxY - minY, 2)).toInt + 2)
+    val rotated: ImgCommon = new Img(Math.sqrt(Math.pow(maxX - minX, 2)).toInt + 2, Math.sqrt(Math.pow(maxY - minY, 2)).toInt + 2)
 
     val midpoint2: Vector2 = new Vector2(rotated.width / 2.0, rotated.height / 2.0)
 
@@ -332,36 +322,33 @@ object ImgOps {
       }
 
     })
-    rotated
   }
 
-  @JSExport def grayscaleAverageRGB(img: ImageBasics): ImageBasics = {
-    val gray: ImageBasics = new Img(img.width, img.height)
-    gray.pixels((x: Int, y: Int) => {
+  @JSExport def grayscaleAverageRGB(img: ImgCommon): ImgCommon = {
+    img.pixels((x: Int, y: Int) => {
       val c = img.getARGB(x, y)
       val avgIntensity = (c.red + c.green + c.blue) / 3
-      gray.setARGB(x, y, RGBA(avgIntensity, avgIntensity, avgIntensity, c.alpha))
+      img.setARGB(x, y, RGBA(avgIntensity, avgIntensity, avgIntensity, c.alpha))
     })
   }
 
-  @JSExport def grayscaleLABIntensity(img: ImageBasics): ImageBasics = {
-    val gray: ImageBasics = new Img(img.width, img.height)
-    gray.pixels((x: Int, y: Int) => {
+  @JSExport def grayscaleLABIntensity(img: ImgCommon): ImgCommon = {
+    img.pixels((x: Int, y: Int) => {
       val c: RGBA = RGBA(img.getARGB(x, y))
       val lab: LAB = c
       val intensity: RGBA = SlowSlimLab(lab.L, 0f, 0f)
-      gray.setARGB(x, y, RGBA(intensity.red, intensity.green, intensity.blue, c.alpha))
+      img.setARGB(x, y, RGBA(intensity.red, intensity.green, intensity.blue, c.alpha))
     })
   }
 
-  @JSExport def negative(img: ImageBasics): ImageBasics = {
+  @JSExport def negative(img: ImgCommon): ImgCommon = {
     img pixels ((x: Int, y: Int) => {
       val c = img.getARGB(x, y)
       img.setARGB(x, y, RGBA(255 - c.red, 255 - c.green, 255 - c.blue, c.alpha))
     })
   }
 
-  @JSExport def thresholdLab(img: ImageBasics, intensityRGB: Int): ImageBasics = {
+  @JSExport def thresholdLab(img: ImgCommon, intensityRGB: Int): ImgCommon = {
     val labIntensity: LAB = RGBA(intensityRGB, intensityRGB, intensityRGB)
     val L: Double = labIntensity.L
     img pixels ((x: Int, y: Int) => {
@@ -372,7 +359,7 @@ object ImgOps {
     })
   }
 
-  @JSExport def thresholdRGB(img: ImageBasics, intensity: Int): ImageBasics = {
+  @JSExport def thresholdRGB(img: ImgCommon, intensity: Int): ImgCommon = {
     img pixels ((x: Int, y: Int) => {
       val c: RGBA = img.getARGB(x, y)
       img.setARGB(x, y, RGBA(
@@ -384,7 +371,7 @@ object ImgOps {
     })
   }
 
-  @JSExport def brightness(img: ImageBasics, b: Int): ImageBasics = {
+  @JSExport def brightness(img: ImgCommon, b: Int): ImgCommon = {
       img pixels ((x: Int, y: Int) => {
         val c: RGBA = img.getARGB(x, y)
         img.setARGB(x, y, RGBA(
@@ -396,7 +383,7 @@ object ImgOps {
       })
   }
 
-  @JSExport def contrast(img: ImageBasics, c: Double): ImageBasics = {
+  @JSExport def contrast(img: ImgCommon, c: Double): ImgCommon = {
     val f = (259 * (c + 255)) / (255 * (259 - c))
     img pixels ((x: Int, y: Int) => {
       val c: RGBA = img.getARGB(x, y)
@@ -409,7 +396,7 @@ object ImgOps {
     })
   }
 
-  @JSExport def equalizeRGB(img: ImageBasics): ImageBasics = {
+  @JSExport def equalizeRGB(img: ImgCommon): ImgCommon = {
     val redHist = Array.fill[Double](256)(0.0)
     val greenHist = Array.fill[Double](256)(0.0)
     val blueHist = Array.fill[Double](256)(0.0)
@@ -448,8 +435,8 @@ object ImgOps {
     })
   }
 
-  @JSExport def median(img: ImageBasics, radius: Int): ImageBasics = {
-    val medianCut: ImageBasics = new Img(img.width, img.height)
+  @JSExport def median(img: ImgCommon, radius: Int): ImgCommon = {
+    val medianCut: ImgCommon = new Img(img.width, img.height)
 
     for (y <- 0 until img.height) {
 
@@ -504,7 +491,7 @@ object ImgOps {
     medianCut
   }
 
-  @JSExport def concisePalette(img: ImageBasics): ColorPalette = {
+  @JSExport def concisePalette(img: ImgCommon): ColorPalette = {
     val colorFrequency = ColorHistogram.fromImage(img).hist // consolidate exact color duplicates
     println(s"found ${colorFrequency.size} distinct colors in the image.")
 
@@ -579,20 +566,18 @@ object ImgOps {
     var map = HashMap[Color, Int]()
 
     for ((c, f) <- colorHistogram.hist) {
-      if (f/total > 0.001) map = map + ((c, f))
+      if (f/total > 0.001) map = map + ((toLab(c), f))
     }
     println("discarded many colors")
     ColorPalette(map)
   }
 
-  @JSExport def projectToPalette(cp: ColorPalette, img: ImageBasics): ImageBasics = {
+  @JSExport def projectToPalette(cp: ColorPalette, img: ImgCommon): ImgCommon = {
     img pixels ((x: Int, y: Int) => {
       val lab: LAB = RGBA(img.getARGB(x, y))
       val nearestMatch = cp.nearestMatch[LAB](lab).color
       img.setARGB(x, y, nearestMatch)
     })
-
-    img
   }
 }
 

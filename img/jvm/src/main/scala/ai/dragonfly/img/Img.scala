@@ -11,7 +11,7 @@ object Img {
   implicit def toImg(bi: BufferedImage): Img = new Img(bi)
 }
 
-class Img (private val bi: BufferedImage) extends ImageBasics {
+class Img (private val bi: BufferedImage) extends ImgCommon {
 
   @Override val width: Int = bi.getWidth
   @Override val height: Int = bi.getHeight
@@ -24,14 +24,14 @@ class Img (private val bi: BufferedImage) extends ImageBasics {
 
   @Override def linearIndexOf(x: Int, y: Int): Int = y * width + x
 
-  override def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): ImageBasics = {
+  override def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): ImgCommon = {
     import ai.dragonfly.img.Img._
     bi.getSubimage(xOffset, yOffset, w, h)
   }
 
   override def getIntArray(startX: Int, startY: Int, w: Int, h: Int): Array[Int] = bi.getRGB(startX, startY, w, h, null, 0, w)
 
-  override def setIntArray(startX: Int, startY: Int, w: Int, h: Int, rgba: Array[Int], offset: Int, stride: Int): ImageBasics = {
+  override def setIntArray(startX: Int, startY: Int, w: Int, h: Int, rgba: Array[Int], offset: Int, stride: Int): ImgCommon = {
     bi.setRGB(startX, startY, w, h, rgba, offset, stride)
     this
   }
@@ -52,7 +52,7 @@ class Img (private val bi: BufferedImage) extends ImageBasics {
     uint8CA
   }
 
-  override def setUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): ImageBasics = {
+  override def setUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): ImgCommon = {
     var workingOffset = 0
 
     for (y <- startY until startY + h) {
@@ -72,7 +72,7 @@ class Img (private val bi: BufferedImage) extends ImageBasics {
 
   override def asUint8ClampedArray = getUint8ClampedArray(0, 0, width, height)
 
-  override def copy(): ImageBasics = getSubImage(0, 0, width, height)
+  override def copy(): ImgCommon = getSubImage(0, 0, width, height)
 }
 
 object TestImgJVM extends App {
