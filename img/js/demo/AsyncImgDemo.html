@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>img.dragonfly.ai Demo</title>
-  <script type="text/javascript" src="../target/scala-2.12/img-fastopt.js"></script>
+  <script type="text/javascript" src="../target/scala-2.12/scalajs-bundler/main/img-fastopt-bundle.js"></script>
 <script type="text/javascript">
 
 </script>
@@ -33,7 +33,7 @@ ai.dragonfly.distributed.Snowflake().ready(
     imgAsncSprite = idu.htmlImageElementToImgAsynch(spriteHtmlElement);
 
 // Demo Features:
-/*
+
     imgOpsClient.randomizeRGB(500, 400, function(responseImg){
       console.log("randomizeRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);
       var div = document.getElementById("randomizeRGB");
@@ -70,7 +70,7 @@ ai.dragonfly.distributed.Snowflake().ready(
       var div = document.getElementById("rotate180Degrees");
       idu.toHtmlImage( responseImg, function(elem) { div.append(elem); } );
     });
-*/
+
 
     imgOpsClient.grayscaleAverageRGB(imgAsncDragonfly.copy(), function(responseImg) {
       //console.log("grayscaleAverageRGB response img: " + responseImg + " " + responseImg.width + "x" + responseImg.height);

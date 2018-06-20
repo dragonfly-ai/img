@@ -10,28 +10,20 @@ import org.scalajs.dom
 import org.scalajs.dom.raw._
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSExport
+import scala.scalajs.js.annotation.{JSExport, JSExportAll, JSExportTopLevel}
 import scala.scalajs.js.typedarray.ArrayBuffer
-
 import boopickle.Default._
-
 import ImgOpsTransferable._
 
-@js.native @js.annotation.JSGlobalScope
-object WorkerGlobal extends js.Any {
-  def addEventListener(`type`: String, f: js.Function): Unit = js.native
-  def postMessage(data: js.Any, transferList: js.Array[Transferable] = js.Array[Transferable]()): Unit = js.native
-}
-
-@JSExport("ImgWorker")
+@JSExportTopLevel("ai.dragonfly.img.async.ImgWorker")
 object ImgWorker {
-  @JSExport
-  def main(): Unit = {
+
+  @JSExport def main(): Unit = {
     WorkerGlobal.addEventListener("message", onMessage _ )
     WorkerGlobal.postMessage(s"Started")
   }
 
-  def onMessage(msg: dom.MessageEvent) = {
+  private def onMessage(msg: dom.MessageEvent) = {
     //println("Worker received message: " + msg.data)
     msg.data match {
       case s: String => println("worker received string: " + s)

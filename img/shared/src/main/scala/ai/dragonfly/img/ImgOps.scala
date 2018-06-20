@@ -260,10 +260,10 @@ object ImgOps {
     // Step 1, assess canvas size for resulting image:
     val midpoint1 = new Vector2(img.width / 2.0, img.height / 2.0)
     val corners: Array[Vector2] = Array(
-      new Vector2(0, 0).subtract(midpoint1).asInstanceOf[Vector2],
-      new Vector2(0, img.height).subtract(midpoint1).asInstanceOf[Vector2],
-      new Vector2(img.width, 0).subtract(midpoint1).asInstanceOf[Vector2],
-      new Vector2(img.width, img.height).subtract(midpoint1).asInstanceOf[Vector2]
+      Vector2(0, 0).subtract(midpoint1),
+      Vector2(0, img.height).subtract(midpoint1),
+      Vector2(img.width, 0).subtract(midpoint1),
+      Vector2(img.width, img.height).subtract(midpoint1)
     )
 
     var minX = Double.MaxValue
@@ -272,7 +272,7 @@ object ImgOps {
     var maxY = Double.MinValue
 
     for ( v <- corners ) {
-      val rotated = v.rotate(angleRadians).asInstanceOf[Vector2]
+      val rotated = v.rotate(angleRadians)
       minX = Math.min(rotated.x, minX)
       minY = Math.min(rotated.y, minY)
       maxX = Math.max(rotated.x, maxX)

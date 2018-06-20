@@ -10,7 +10,7 @@ version in ThisBuild := "0.1"
 
 resolvers in ThisBuild += "dragonfly.ai" at "http://code.dragonfly.ai:8080/"
 
-publishTo in ThisBuild := Some(Resolver.file("file",  new File( "/var/www/maven" )) )
+publishTo in ThisBuild := Some( Resolver.file("file",  new File( "/var/www/maven" )) )
 
 val img = crossProject.settings(
   // shared settings
@@ -20,12 +20,14 @@ val img = crossProject.settings(
     "io.suzaku" %%% "boopickle" % "1.2.6",
     "ai.dragonfly.code" %%% "color" % "0.1",
     "ai.dragonfly.code" %%% "snowflake" % "0.1",
-    "ai.dragonfly.code" %%% "spatial" % "0.1"
+    "ai.dragonfly.code" %%% "spatial" % "0.1",
+    "ai.dragonfly.code" %%% "matrix" % "0.1"
   )
-).jsSettings(
+).jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin)).jsSettings(
   // JS-specific settings here
-  jsDependencies += RuntimeDOM
-
+  // scalaJSModuleKind := ModuleKind.CommonJSModule,
+  // webpackBundlingMode := BundlingMode.LibraryOnly()
+  webpackBundlingMode := BundlingMode.LibraryAndApplication("Img")
 ).jvmSettings(
   // JVM-specific settings here
   libraryDependencies += "org.scala-js" %% "scalajs-stubs" % scalaJSVersion % "provided"

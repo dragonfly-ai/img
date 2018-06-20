@@ -564,7 +564,7 @@ public class CannyEdgeDetector {
         }
         edgesImage.getWritableTile(0, 0).setDataElements(0, 0, width, height, pixels);
     }
-
+/*
     public static void main(String[] args) {
         try {
             BufferedImage bi = ImageIO.read(new File("/home/c/source/ai.dragonfly/img/img/js/demo/dragonflyPubDom.jpg"));
@@ -578,4 +578,5 @@ public class CannyEdgeDetector {
 
         }
     }
+*/
 }

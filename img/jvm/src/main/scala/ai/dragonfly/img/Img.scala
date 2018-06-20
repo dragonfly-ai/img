@@ -74,7 +74,7 @@ class Img (private val bi: BufferedImage) extends ImgCommon {
 
   override def copy(): ImgCommon = getSubImage(0, 0, width, height)
 }
-
+/*
 object TestImgJVM extends App {
   var tempDir = System.getProperty("java.io.tmpdir")
   println(tempDir)
@@ -82,3 +82,4 @@ object TestImgJVM extends App {
   ImgOps.randomizeRGB(img)
   ImageIO.write(img, "PNG", new File(tempDir + "/img-" + System.currentTimeMillis() + ".png"))
 }
+*/
