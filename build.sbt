@@ -20,8 +20,7 @@ val img = crossProject.settings(
     "io.suzaku" %%% "boopickle" % "1.2.6",
     "ai.dragonfly.code" %%% "color" % "0.1",
     "ai.dragonfly.code" %%% "snowflake" % "0.1",
-    "ai.dragonfly.code" %%% "spatial" % "0.1",
-    "ai.dragonfly.code" %%% "matrix" % "0.1"
+    "ai.dragonfly.code" %%% "spatial" % "0.1"
   )
 ).jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin)).jsSettings(
   // JS-specific settings here
