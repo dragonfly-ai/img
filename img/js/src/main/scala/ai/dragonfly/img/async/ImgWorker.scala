@@ -10,7 +10,7 @@ import org.scalajs.dom
 import org.scalajs.dom.raw._
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSExport, JSExportAll, JSExportTopLevel}
+import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 import scala.scalajs.js.typedarray.ArrayBuffer
 import boopickle.Default._
 import ImgOpsTransferable._
@@ -43,7 +43,6 @@ object ImgWorker {
               for (t <- response) responseTransferable.push(t)
               WorkerGlobal.postMessage(response, responseTransferable) // return the results.
             }
-
 
             WorkerGlobal.postMessage(jsArr, jsArr) // return the invocation parameters.
 
