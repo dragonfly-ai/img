@@ -498,7 +498,7 @@ object ImgOps {
     val snappedAndMapped = new DiscreteHistogram[Vector3]
 
     // bin the colors by rounding the L*, a*, and b* components to nearest integers
-    for ((c, f) <- colorFrequency) snappedAndMapped.adjust({
+    for ((c, f) <- colorFrequency) snappedAndMapped({
       val lab = Color.toLab(RGBA(c))
       Vector3(lab.L, lab.a, lab.b).round().asInstanceOf[Vector3]
     }, f)
@@ -556,7 +556,7 @@ object ImgOps {
           errorCount = errorCount + 1
           transparent
       }
-      colorHistogram.adjust(rgba, 1)
+      colorHistogram(rgba, 1)
     })
 
     println(s"Chain Stats: $chainStats")
