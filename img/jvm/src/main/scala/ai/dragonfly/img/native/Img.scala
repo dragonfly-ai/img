@@ -1,17 +1,20 @@
-package ai.dragonfly.img
+package ai.dragonfly.img.native
 
 import java.awt.image.BufferedImage
-import java.io.File
-import javax.imageio.ImageIO
 
+import ai.dragonfly.img.Image
+
+import scala.language.implicitConversions
 import scala.scalajs.js.typedarray.Uint8ClampedArray
 
 object Img {
   implicit def toBufferedImage(img: Img): BufferedImage = img.bi
-  implicit def toImg(bi: BufferedImage): Img = new Img(bi)
+  implicit def toImg(bi: BufferedImage): Image = new Img(bi)
 }
 
-class Img (private val bi: BufferedImage) extends ImgCommon {
+class Img (private val bi: BufferedImage) extends Image {
+
+  import Img._
 
   @Override val width: Int = bi.getWidth
   @Override val height: Int = bi.getHeight
@@ -24,14 +27,11 @@ class Img (private val bi: BufferedImage) extends ImgCommon {
 
   @Override def linearIndexOf(x: Int, y: Int): Int = y * width + x
 
-  override def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): ImgCommon = {
-    import ai.dragonfly.img.Img._
-    bi.getSubimage(xOffset, yOffset, w, h)
-  }
+  override def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): Image = bi.getSubimage(xOffset, yOffset, w, h)
 
   override def getIntArray(startX: Int, startY: Int, w: Int, h: Int): Array[Int] = bi.getRGB(startX, startY, w, h, null, 0, w)
 
-  override def setIntArray(startX: Int, startY: Int, w: Int, h: Int, rgba: Array[Int], offset: Int, stride: Int): ImgCommon = {
+  override def setIntArray(startX: Int, startY: Int, w: Int, h: Int, rgba: Array[Int], offset: Int, stride: Int): Image = {
     bi.setRGB(startX, startY, w, h, rgba, offset, stride)
     this
   }
@@ -52,7 +52,7 @@ class Img (private val bi: BufferedImage) extends ImgCommon {
     uint8CA
   }
 
-  override def setUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): ImgCommon = {
+  override def setUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): Image = {
     var workingOffset = 0
 
     for (y <- startY until startY + h) {
@@ -72,7 +72,7 @@ class Img (private val bi: BufferedImage) extends ImgCommon {
 
   override def asUint8ClampedArray = getUint8ClampedArray(0, 0, width, height)
 
-  override def copy(): ImgCommon = getSubImage(0, 0, width, height)
+  override def copy(): Image = getSubImage(0, 0, width, height)
 }
 /*
 object TestImgJVM extends App {

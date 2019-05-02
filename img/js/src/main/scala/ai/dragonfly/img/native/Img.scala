@@ -1,19 +1,16 @@
-package ai.dragonfly.img
-
+package ai.dragonfly.img.native
 
 import ai.dragonfly.color._
+import ai.dragonfly.img.Image
 
-import scala.scalajs.js.annotation.{JSExportAll, JSExport}
+import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 import scala.scalajs.js.typedarray.Uint8ClampedArray
 
-// How to make an asynchronous version of this?
-
-@JSExport
-class Img (@Override val width: Int, @JSExport val pixelData: Uint8ClampedArray) extends ImgCommon {
+@JSExportTopLevel("ai.dragonfly.img.Img") class Img (@Override val width: Int, @JSExport val pixelData: Uint8ClampedArray) extends Image {
 
   @Override val height: Int = (pixelData.length / 4) / width
 
-  @JSExport def this(width: Int, height: Int) = this(width, new Uint8ClampedArray(width * height * 4))
+  @JSExportTopLevel("ai.dragonfly.img.Img") def this(width: Int, height: Int) = this(width, new Uint8ClampedArray(width * height * 4))
 
   def this(width: Int, pixelArray: Array[Int]) = this(
     width,
@@ -51,7 +48,7 @@ class Img (@Override val width: Int, @JSExport val pixelData: Uint8ClampedArray)
 
 
 
-  @Override def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): ImgCommon = {
+  @Override def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): Image = {
     val subImg = new Img(w, h)
     subImg pixels ((x:Int, y:Int) => subImg.setARGB(x, y, getARGB(xOffset + x, yOffset + y)))
     subImg
@@ -69,7 +66,7 @@ class Img (@Override val width: Int, @JSExport val pixelData: Uint8ClampedArray)
     arr
   }
 
-  @Override def setIntArray(startX: Int, startY: Int, w: Int, h: Int, rgba: Array[Int], offset: Int, stride: Int): ImgCommon = {
+  @Override def setIntArray(startX: Int, startY: Int, w: Int, h: Int, rgba: Array[Int], offset: Int, stride: Int): Image = {
     var workingOffset = offset
 
     for (y <- startY until startY + h) {
@@ -101,7 +98,7 @@ class Img (@Override val width: Int, @JSExport val pixelData: Uint8ClampedArray)
     arr
   }
 
-  @Override def setUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): ImgCommon = {
+  @Override def setUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): Image = {
     var workingOffset = 0
 
     for (y <- startY until startY + h) {
@@ -122,7 +119,7 @@ class Img (@Override val width: Int, @JSExport val pixelData: Uint8ClampedArray)
 
   @JSExport def asUint8ClampedArray: Uint8ClampedArray = pixelData
 
-  @Override override def copy(): ImgCommon = getSubImage(0, 0, width, height)
+  @Override override def copy(): Image = getSubImage(0, 0, width, height)
 
   @Override override def toString(): String = s"Img($width X $height)"
 

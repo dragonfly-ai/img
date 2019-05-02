@@ -1,37 +1,18 @@
-import sbt.Keys._
+import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
-scalaVersion in ThisBuild := "2.12.3"
-
-name in ThisBuild := "img"
-
-organization in ThisBuild := "ai.dragonfly.code"
-
-version in ThisBuild := "0.1"
-
-resolvers in ThisBuild += "dragonfly.ai" at "http://code.dragonfly.ai:8080/"
-
-publishTo in ThisBuild := Some( Resolver.file("file",  new File( "/var/www/maven" )) )
-
-val img = crossProject.settings(
-  // shared settings
-  libraryDependencies ++= Seq(
-    "org.scala-js" %% "scalajs-dom_sjs0.6" % "0.9.1",
-    "com.lihaoyi" %%% "scalatags" % "0.6.2",
-    "io.suzaku" %%% "boopickle" % "1.2.6",
-    "ai.dragonfly.code" %%% "color" % "0.1",
-    "ai.dragonfly.code" %%% "snowflake" % "0.1",
-    "ai.dragonfly.code" %%% "spatial" % "0.1"
-  )
-).jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin)).jsSettings(
-  // JS-specific settings here
-  // scalaJSModuleKind := ModuleKind.CommonJSModule,
-  // webpackBundlingMode := BundlingMode.LibraryOnly()
-  webpackBundlingMode := BundlingMode.LibraryAndApplication("Img")
-).jvmSettings(
-  // JVM-specific settings here
-  libraryDependencies += "org.scala-js" %% "scalajs-stubs" % scalaJSVersion % "provided"
+val sharedSettings = Seq(
+  version in ThisBuild := "0.2",
+  scalaVersion := "2.12.6",
+  organization in ThisBuild := "ai.dragonfly.code",
+  scalacOptions in ThisBuild ++= Seq("-feature"),
+  resolvers in ThisBuild += "dragonfly.ai" at "http://code.dragonfly.ai/",
+  libraryDependencies ++= Seq( "ai.dragonfly.code" %%% "color" % "0.2" ),
+  mainClass in Compile := Some("ai.dragonfly.img.TestImg"),
+  publishTo in ThisBuild := Some( Resolver.file ( "file",  new File( "/var/www/maven" ) ) )
 )
 
-lazy val js = img.js
-
-lazy val jvm = img.jvm
+val img = crossProject(JSPlatform, JVMPlatform)
+  .settings(sharedSettings)
+  .jsSettings(
+     scalaJSUseMainModuleInitializer := true
+  )
