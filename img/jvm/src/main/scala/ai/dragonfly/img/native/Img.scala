@@ -9,7 +9,7 @@ import scala.scalajs.js.typedarray.Uint8ClampedArray
 
 object Img {
   implicit def toBufferedImage(img: Img): BufferedImage = img.bi
-  implicit def toImg(bi: BufferedImage): Image = new Img(bi)
+  implicit def toImg(bi: BufferedImage): Img = new Img(bi)
 }
 
 class Img (private val bi: BufferedImage) extends Image {
@@ -27,11 +27,13 @@ class Img (private val bi: BufferedImage) extends Image {
 
   @Override def linearIndexOf(x: Int, y: Int): Int = y * width + x
 
-  override def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): Image = bi.getSubimage(xOffset, yOffset, w, h)
+  override def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): Img = {
+    bi.getSubimage(xOffset, yOffset, w, h)
+  }
 
   override def getIntArray(startX: Int, startY: Int, w: Int, h: Int): Array[Int] = bi.getRGB(startX, startY, w, h, null, 0, w)
 
-  override def setIntArray(startX: Int, startY: Int, w: Int, h: Int, rgba: Array[Int], offset: Int, stride: Int): Image = {
+  override def setIntArray(startX: Int, startY: Int, w: Int, h: Int, rgba: Array[Int], offset: Int, stride: Int): Img = {
     bi.setRGB(startX, startY, w, h, rgba, offset, stride)
     this
   }
@@ -52,7 +54,7 @@ class Img (private val bi: BufferedImage) extends Image {
     uint8CA
   }
 
-  override def setUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): Image = {
+  override def setUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): Img = {
     var workingOffset = 0
 
     for (y <- startY until startY + h) {
@@ -72,14 +74,5 @@ class Img (private val bi: BufferedImage) extends Image {
 
   override def asUint8ClampedArray = getUint8ClampedArray(0, 0, width, height)
 
-  override def copy(): Image = getSubImage(0, 0, width, height)
+  override def copy(): Img = getSubImage(0, 0, width, height)
 }
-/*
-object TestImgJVM extends App {
-  var tempDir = System.getProperty("java.io.tmpdir")
-  println(tempDir)
-  var img = new Img(50, 50)
-  ImgOps.randomizeRGB(img)
-  ImageIO.write(img, "PNG", new File(tempDir + "/img-" + System.currentTimeMillis() + ".png"))
-}
-*/

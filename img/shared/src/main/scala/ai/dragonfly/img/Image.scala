@@ -18,7 +18,7 @@ trait Image {
         f(x, y)
       }
     }
-    this
+    this.asInstanceOf[Img]
   }
 
   @JSExport def pixels (f:  js.Function2[Int, Int, Any]): Img = {
@@ -27,7 +27,7 @@ trait Image {
         f(x, y)
       }
     }
-    this
+    this.asInstanceOf[Img]
   }
 
   @JSExport def linearIndexOf(x: Int, y: Int): Int

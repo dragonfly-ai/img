@@ -48,10 +48,9 @@ import scala.scalajs.js.typedarray.Uint8ClampedArray
 
 
 
-  @Override def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): Image = {
+  @Override def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): Img = {
     val subImg = new Img(w, h)
     subImg pixels ((x:Int, y:Int) => subImg.setARGB(x, y, getARGB(xOffset + x, yOffset + y)))
-    subImg
   }
 
   @Override def getIntArray(startX: Int, startY: Int, w: Int, h: Int): Array[Int] = {
@@ -66,7 +65,7 @@ import scala.scalajs.js.typedarray.Uint8ClampedArray
     arr
   }
 
-  @Override def setIntArray(startX: Int, startY: Int, w: Int, h: Int, rgba: Array[Int], offset: Int, stride: Int): Image = {
+  @Override def setIntArray(startX: Int, startY: Int, w: Int, h: Int, rgba: Array[Int], offset: Int, stride: Int): Img = {
     var workingOffset = offset
 
     for (y <- startY until startY + h) {
@@ -98,7 +97,7 @@ import scala.scalajs.js.typedarray.Uint8ClampedArray
     arr
   }
 
-  @Override def setUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): Image = {
+  @Override def setUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): Img = {
     var workingOffset = 0
 
     for (y <- startY until startY + h) {
@@ -119,7 +118,7 @@ import scala.scalajs.js.typedarray.Uint8ClampedArray
 
   @JSExport def asUint8ClampedArray: Uint8ClampedArray = pixelData
 
-  @Override override def copy(): Image = getSubImage(0, 0, width, height)
+  @Override override def copy(): Img = getSubImage(0, 0, width, height)
 
   @Override override def toString(): String = s"Img($width X $height)"
 
