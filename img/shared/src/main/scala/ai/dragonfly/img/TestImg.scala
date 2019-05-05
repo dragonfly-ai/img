@@ -12,7 +12,7 @@ object TestImg {
 
   def apply(): Unit = {
 
-    val i0 = new ai.dragonfly.img.native.Img(11, 22)
+    val i0 = new Img(11, 22)
 
     println(s"i0 dimensions: ${i0.width} ${i0.height}")
     i0 pixels ((x: Int, y: Int) => {

@@ -7,12 +7,10 @@ val sharedSettings = Seq(
   scalacOptions in ThisBuild ++= Seq("-feature"),
   resolvers in ThisBuild += "dragonfly.ai" at "http://code.dragonfly.ai/",
   libraryDependencies ++= Seq( "ai.dragonfly.code" %%% "color" % "0.2" ),
-  mainClass in Compile := Some("ai.dragonfly.img.TestImg"),
+  mainClass := Some("ai.dragonfly.img.TestImg"),
   publishTo in ThisBuild := Some( Resolver.file ( "file",  new File( "/var/www/maven" ) ) )
 )
 
 val img = crossProject(JSPlatform, JVMPlatform)
   .settings(sharedSettings)
-  .jsSettings(
-     scalaJSUseMainModuleInitializer := true
-  )
+  .jsSettings(scalaJSUseMainModuleInitializer := true)
