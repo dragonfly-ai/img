@@ -12,6 +12,16 @@ trait Image {
   @JSExport def width: Int
   @JSExport def height: Int
 
+  @JSExport def linearIndexOf(x: Int, y: Int): Int
+
+  @JSExport def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): Img
+
+  @JSExport def setSubImage(xOffset: Int, yOffset: Int, sourceImage: Img, sxOffset: Int, syOffset: Int, w: Int, h: Int): Img
+
+  @JSExport def setSubImage(xOffset: Int, yOffset: Int, subImage: Img): Img = this.setSubImage(xOffset, yOffset, subImage, 0, 0, subImage.width, subImage.height)
+
+  @JSExport def copy(): Img = getSubImage(0, 0, width, height)
+
   @JSExport def pixels(f: (Int, Int) => Any): Img = {
     for (y <- 0 until height) {
       for (x <- 0 until width) {
@@ -29,23 +39,5 @@ trait Image {
     }
     this.asInstanceOf[Img]
   }
-
-  @JSExport def linearIndexOf(x: Int, y: Int): Int
-
-  @JSExport def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): Img
-
-  @JSExport def getIntArray(startX: Int, startY: Int, w: Int, h: Int): Array[Int]
-
-  @JSExport def setIntArray(startX: Int, startY: Int, w: Int, h: Int, rgba: Array[Int], offset: Int, stride: Int): Img
-
-  @JSExport def getUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int): Uint8ClampedArray
-
-  @JSExport def setUint8ClampedArray(startX: Int, startY: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): Img
-
-  @JSExport def asUint8ClampedArray: Uint8ClampedArray
-
-  @JSExport def asIntArray: Array[Int] = getIntArray(0, 0, width, height)
-
-  @JSExport def copy(): Img
 
 }

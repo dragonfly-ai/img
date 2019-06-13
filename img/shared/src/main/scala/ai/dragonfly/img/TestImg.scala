@@ -11,8 +11,9 @@ object TestImg {
   import ai.dragonfly.color.Color._
 
   def apply(): Unit = {
+    val (width, height) = (11, 22)
 
-    val i0 = new Img(11, 22)
+    val i0 = Img(width, height)
 
     println(s"i0 dimensions: ${i0.width} ${i0.height}")
     i0 pixels ((x: Int, y: Int) => {
@@ -27,5 +28,6 @@ object TestImg {
     })
 
     println(svs)
+
   }
 }
