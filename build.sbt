@@ -1,16 +1,18 @@
-import sbtcrossproject.CrossPlugin.autoImport.crossProject
+ThisBuild / scalaVersion := "2.13.3"
 
-val sharedSettings = Seq(
-  version in ThisBuild := "0.2",
-  scalaVersion := "2.12.6",
-  organization in ThisBuild := "ai.dragonfly.code",
-  scalacOptions in ThisBuild ++= Seq("-feature"),
-  resolvers in ThisBuild += "dragonfly.ai" at "https://code.dragonfly.ai/",
-  libraryDependencies ++= Seq( "ai.dragonfly.code" %%% "color" % "0.2" ),
-  mainClass := Some("ai.dragonfly.img.TestImg"),
-  publishTo in ThisBuild := Some( Resolver.file ( "file",  new File( "/var/www/maven" ) ) )
+lazy val root = project.in(file(".")).aggregate(img.js, img.jvm).settings(
+  publishTo := Some( Resolver.file("file",  new File( "/var/www/maven" ) ) )
 )
 
-val img = crossProject(JSPlatform, JVMPlatform)
-  .settings(sharedSettings)
-  .jsSettings(scalaJSUseMainModuleInitializer := true)
+lazy val img = crossProject(JSPlatform, JVMPlatform).settings(
+  publishTo := Some(Resolver.file("file",  new File("/var/www/maven"))),
+  name := "img",
+  version := "0.2",
+  organization := "ai.dragonfly.code",
+  resolvers += "dragonfly.ai" at "https://code.dragonfly.ai:4343/",
+  libraryDependencies ++= Seq( "ai.dragonfly.code" %%% "color" % "0.2" ),
+  scalacOptions ++= Seq("-feature"),
+  mainClass in (Compile, run) := Some("ai.dragonfly.img.TestImg")
+).jvmSettings().jsSettings(
+  scalaJSUseMainModuleInitializer := true
+)

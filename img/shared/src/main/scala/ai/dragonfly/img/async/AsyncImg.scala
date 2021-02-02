@@ -8,14 +8,14 @@ import scala.concurrent.{Future, Promise}
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 import scala.util.{Failure, Success}
 
-@JSExportTopLevel("ai.dragonfly.img.async.AsyncImg")
+@JSExportTopLevel("AsyncImg")
 class AsyncImg(private var img:Img) {
 
   @JSExport val width: Int = img.width
   @JSExport val height: Int = img.height
 
   // Constructors:
-  @JSExport def this(width: Int, height: Int) = this ( Img(width, height) )
+  def this(width: Int, height: Int) = this ( Img(width, height) )
 
   private var checkedIn = true
   private val promiseQueue: mutable.Queue[Promise[Img]] = new mutable.Queue[Promise[Img]]()

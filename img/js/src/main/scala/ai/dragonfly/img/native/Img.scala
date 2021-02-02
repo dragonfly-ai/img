@@ -6,11 +6,11 @@ import ai.dragonfly.img.Image
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 import scala.scalajs.js.typedarray.Uint8ClampedArray
 
-@JSExportTopLevel("ai.dragonfly.img.Img") class Img (override val width: Int, @JSExport val pixelData: Uint8ClampedArray) extends Image {
+@JSExportTopLevel("Img") class Img (override val width: Int, @JSExport val pixelData: Uint8ClampedArray) extends Image {
 
   override val height: Int = (pixelData.length / 4) / width
 
-  @JSExportTopLevel("ai.dragonfly.img.Img") def this(width: Int, height: Int) = this(width, new Uint8ClampedArray(width * height * 4))
+  @JSExportTopLevel("Img") def this(width: Int, height: Int) = this(width, new Uint8ClampedArray(width * height * 4))
 
   def this(width: Int, pixelArray: Array[Int]) = this(
     width,

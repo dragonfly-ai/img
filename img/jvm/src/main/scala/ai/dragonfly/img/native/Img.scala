@@ -66,7 +66,6 @@ class Img (override val width: Int, private val pixelData: Array[Int]) extends I
     }
     this
   }
-
 }
 
 object TestImageJVM extends App {
