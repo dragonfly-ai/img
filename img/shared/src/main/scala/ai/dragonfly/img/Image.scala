@@ -2,7 +2,6 @@ package ai.dragonfly.img
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
-import scala.scalajs.js.typedarray.Uint8ClampedArray
 
 trait Image {
 
@@ -23,15 +22,6 @@ trait Image {
   @JSExport def copy(): Img = getSubImage(0, 0, width, height)
 
   @JSExport def pixels(f: (Int, Int) => Any): Img = {
-    for (y <- 0 until height) {
-      for (x <- 0 until width) {
-        f(x, y)
-      }
-    }
-    this.asInstanceOf[Img]
-  }
-
-  @JSExport def pixels (f:  js.Function2[Int, Int, Any]): Img = {
     for (y <- 0 until height) {
       for (x <- 0 until width) {
         f(x, y)

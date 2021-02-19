@@ -40,7 +40,7 @@ class AsyncImg(private var img:Img) {
       Future[Img] { this.img }
     } else {  // enqueue this request for image data.
       println("\tUse the queue.")
-      val promise = Promise[Img]
+      val promise = Promise[Img]()
       promiseQueue.enqueue(promise)
       promise.future
     }
@@ -55,7 +55,7 @@ class AsyncImg(private var img:Img) {
 
   def reserveImgData[T](f: Img => T ): Future[T] = {
     println("called reserveImgData")
-    val promise = Promise[T]
+    val promise = Promise[T]()
     checkOutImgData onComplete {
       case Success(img: Img) =>
         println("\tinvoking callback.")

@@ -17,7 +17,7 @@ import scala.scalajs.js.typedarray.Uint8ClampedArray
     {
       val ui8ca = new Uint8ClampedArray(pixelArray.length * 4)
       var j = 0
-      for (i: Int <- 0 until pixelArray.length) {
+      for (i: Int <- pixelArray.indices) {
         j = i * 4
         val c: RGBA = pixelArray(i)
         ui8ca(j) = c.red
@@ -41,6 +41,15 @@ import scala.scalajs.js.typedarray.Uint8ClampedArray
     pixelData(index+1) = c.green
     pixelData(index+2) = c.blue
     pixelData(index+3) = c.alpha
+  }
+
+  @JSExport def pixels (f:  scala.scalajs.js.Function2[Int, Int, Any]): Img = {
+    for (y <- 0 until height) {
+      for (x <- 0 until width) {
+        f(x, y)
+      }
+    }
+    this.asInstanceOf[Img]
   }
 
   override def linearIndexOf(x: Int, y: Int): Int = y * width + x * 4
