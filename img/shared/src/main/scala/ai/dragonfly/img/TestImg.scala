@@ -1,7 +1,7 @@
 package ai.dragonfly.img
 
 import ai.dragonfly.color._
-import ai.dragonfly.math.stats.StreamingVectorStats
+import ai.dragonfly.math.stats.stream.StreamingVectorStats
 import ai.dragonfly.math.vector.Vector3
 
 object TestImg {
