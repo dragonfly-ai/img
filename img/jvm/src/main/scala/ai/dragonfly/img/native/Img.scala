@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage
 import java.io.File
 import java.net.URL
 
+import ai.dragonfly.color.{HSV, RGBA}
 import ai.dragonfly.img.Image
 import javax.imageio.ImageIO
 
