@@ -43,14 +43,14 @@ import scala.scalajs.js.typedarray.Uint8ClampedArray
     pixelData(index+3) = c.alpha
   }
 
-  @JSExport def pixels (f:  scala.scalajs.js.Function2[Int, Int, Any]): Img = {
-    for (y <- 0 until height) {
-      for (x <- 0 until width) {
-        f(x, y)
-      }
-    }
-    this.asInstanceOf[Img]
-  }
+//  @JSExport def pixels (f:  scala.scalajs.js.Function2[Int, Int, Any]): Img = {
+//    for (y <- 0 until height) {
+//      for (x <- 0 until width) {
+//        f(x, y)
+//      }
+//    }
+//    this.asInstanceOf[Img]
+//  }
 
   override def linearIndexOf(x: Int, y: Int): Int = y * width + x * 4
 
