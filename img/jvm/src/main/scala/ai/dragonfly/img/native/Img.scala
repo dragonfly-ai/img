@@ -20,6 +20,8 @@ object Img {
 }
 
 class Img (override val width: Int, private val pixelData: Array[Int]) extends Image {
+  
+  def this(width: Int, height: Int) = this(width, new Array[Int](width * height * 4))
 
   override val height: Int = pixelData.length / width
 

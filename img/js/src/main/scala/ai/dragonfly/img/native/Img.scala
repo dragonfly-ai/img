@@ -1,33 +1,15 @@
 package ai.dragonfly.img.native
 
-import ai.dragonfly.color._
-import ai.dragonfly.img.Image
+import ai.dragonfly.color.*
+import ai.dragonfly.img.{Image, MismatchedDimensions}
 
-import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 import scala.scalajs.js.typedarray.Uint8ClampedArray
 
-@JSExportTopLevel("Img") class Img (override val width: Int, @JSExport val pixelData: Uint8ClampedArray) extends Image {
+class Img (override val width: Int, val pixelData: Uint8ClampedArray) extends Image {
 
   override val height: Int = (pixelData.length / 4) / width
 
-  @JSExportTopLevel("Img") def this(width: Int, height: Int) = this(width, new Uint8ClampedArray(width * height * 4))
-
-  def this(width: Int, pixelArray: Array[Int]) = this(
-    width,
-    {
-      val ui8ca = new Uint8ClampedArray(pixelArray.length * 4)
-      var j = 0
-      for (i: Int <- pixelArray.indices) {
-        j = i * 4
-        val c: RGBA = pixelArray(i)
-        ui8ca(j) = c.red
-        ui8ca(j+1) = c.green
-        ui8ca(j+2) = c.blue
-        ui8ca(j+3) = c.alpha
-      }
-      ui8ca
-    }
-  )
+  def this(width: Int, height: Int) = this(width, new Uint8ClampedArray(width * height * 4))
 
   override def getARGB(x:Int, y:Int): Int = {
     val index = linearIndexOf(x,y)
@@ -43,7 +25,7 @@ import scala.scalajs.js.typedarray.Uint8ClampedArray
     pixelData(index+3) = c.alpha
   }
 
-//  @JSExport def pixels (f:  scala.scalajs.js.Function2[Int, Int, Any]): Img = {
+//  def pixels (f:  scala.scalajs.js.Function2[Int, Int, Any]): Img = {
 //    for (y <- 0 until height) {
 //      for (x <- 0 until width) {
 //        f(x, y)
@@ -52,76 +34,51 @@ import scala.scalajs.js.typedarray.Uint8ClampedArray
 //    this.asInstanceOf[Img]
 //  }
 
-  override def linearIndexOf(x: Int, y: Int): Int = y * width + x * 4
+  inline override def linearIndexOf(x: Int, y: Int): Int = (y * width + x) * 4
 
-  override def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): ai.dragonfly.img.Img = new Img(w, getUint8ClampedArrayPixels(xOffset, yOffset, w, h))
+  override def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): ai.dragonfly.img.Img = new Img(w, getPixelData(xOffset, yOffset, w, h))
 
   override def setSubImage(xOffset: Int, yOffset: Int, sourceImage: Img, sxOffset: Int, syOffset: Int, w: Int, h: Int): ai.dragonfly.img.Img = {
-    setUint8ClampedArrayPixels(xOffset, yOffset, w, h, sourceImage.getUint8ClampedArrayPixels(sxOffset, syOffset, w, h))
+    setPixelData(xOffset, yOffset, w, h, sourceImage.getPixelData(sxOffset, syOffset, w, h))
     this
   }
 
-  /*
-  override def getIntPixels(xOffset: Int, yOffset: Int, w: Int, h: Int): Array[Int] = {
-    val arr = new Array[Int](w * h)
-    var i = 0
+  def getPixelData(xOffset: Int, yOffset: Int, w: Int, h: Int): Uint8ClampedArray = {
+    val pixelData = new Uint8ClampedArray(w * h * 4)
+    var j = 0
     for (y <- 0 until h) {
       for (x <- 0 until w) {
-        arr(i) = getARGB(xOffset + x, yOffset + y)
-        i = i + 1
+        val i:Int = linearIndexOf(xOffset + x, yOffset + y)
+        pixelData(j) = this.pixelData(i)
+        pixelData(j+1) = this.pixelData(i+1)
+        pixelData(j+2) = this.pixelData(i+2)
+        pixelData(j+3) = this.pixelData(i+3)
+        j = j + 4
       }
     }
-    arr
+    pixelData
   }
 
-  override def setIntPixels(xOffset: Int, yOffset: Int, w: Int, h: Int, pxls: Array[Int]): ai.dragonfly.img.Img = {
-    var workingOffset = 0
-
-    for (y <- yOffset until yOffset + h) {
-      var xOffset = workingOffset
-      for (x <- xOffset until xOffset + w) {
-        val argb = pxls(xOffset)
-        xOffset = xOffset + 1
-        this.setARGB(x, y, argb)
-      }
-      workingOffset = workingOffset + w
-    }
-
+  def setPixelData(pixelData:Uint8ClampedArray):ai.dragonfly.img.Img = {
+    if (this.pixelData.length == pixelData.length) {
+      for (i <- 0 until this.pixelData.length) this.pixelData(i) = pixelData(i)
+    } else throw MismatchedDimensions(this.pixelData.length, pixelData.length)
     this
   }
-*/
-  def getUint8ClampedArrayPixels(xOffset: Int, yOffset: Int, w: Int, h: Int): Uint8ClampedArray = {
-    val arr = new Uint8ClampedArray(w * h * 4)
-    var i = 0
-    for (y <- 0 until h) {
-      for (x <- 0 until w) {
-        val c: RGBA = getARGB(xOffset + x, yOffset + y)
-        arr(i) = c.red
-        arr(i+1) = c.green
-        arr(i+2) = c.blue
-        arr(i+3) = c.alpha
-        i = i + 4
-      }
-    }
-    arr
-  }
 
-  def setUint8ClampedArrayPixels(xOffset: Int, yOffset: Int, w: Int, h: Int, uint8Array: Uint8ClampedArray): ai.dragonfly.img.Img = {
-    var workingOffset = 0
+  def setPixelData(xOffset: Int, yOffset: Int, w: Int, h: Int, pixelData: Uint8ClampedArray): ai.dragonfly.img.Img = {
+    var j = 0
 
     for (y <- yOffset until yOffset + h) {
       for (x <- xOffset until xOffset + w) {
-        val argb = RGBA(
-          uint8Array(workingOffset),
-          uint8Array(workingOffset+1),
-          uint8Array(workingOffset+2),
-          uint8Array(workingOffset+3)
-        ).argb
-        workingOffset = workingOffset + 4
-        setARGB(x, y, argb)
+        val i = linearIndexOf(x, y)
+        this.pixelData(i) = pixelData(j)
+        this.pixelData(i+1) = pixelData(j+1)
+        this.pixelData(i+2) = pixelData(j+2)
+        this.pixelData(i+3) = pixelData(j+3)
+        j = j + 4
       }
     }
-
     this
   }
 

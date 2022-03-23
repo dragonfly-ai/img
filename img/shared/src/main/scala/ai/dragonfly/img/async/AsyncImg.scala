@@ -5,14 +5,12 @@ import ai.dragonfly.img.Img
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
-import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 import scala.util.{Failure, Success}
 
-@JSExportTopLevel("AsyncImg")
 class AsyncImg(private var img:Img) {
 
-  @JSExport val width: Int = img.width
-  @JSExport val height: Int = img.height
+  val width: Int = img.width
+  val height: Int = img.height
 
   // Constructors:
   def this(width: Int, height: Int) = this ( Img(width, height) )
@@ -70,7 +68,7 @@ class AsyncImg(private var img:Img) {
     promise.future
   }
 
-  @JSExport def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): AsyncImg = {
+  def getSubImage(xOffset: Int, yOffset: Int, w: Int, h: Int): AsyncImg = {
     val asyncImg = new AsyncImg(w, h)
     asyncImg.checkedIn = false
 
@@ -79,20 +77,20 @@ class AsyncImg(private var img:Img) {
     asyncImg
   }
 
-  @JSExport def setSubImage(xOffset: Int, yOffset: Int, sourceImage: Img, sxOffset: Int, syOffset: Int, w: Int, h: Int):  Future[AsyncImg] = reserveImgData[AsyncImg] (
+  def setSubImage(xOffset: Int, yOffset: Int, sourceImage: Img, sxOffset: Int, syOffset: Int, w: Int, h: Int):  Future[AsyncImg] = reserveImgData[AsyncImg] (
     (im: Img) => {
       im.setSubImage(xOffset, yOffset, sourceImage, sxOffset, syOffset, w, h)
       this
     }
   )
 
-  @JSExport def snapshot: Future[Img] = reserveImgData[Img] (
+  def snapshot: Future[Img] = reserveImgData[Img] (
     (im: Img) => im.copy()
   )
 
-  @JSExport def copy(): AsyncImg = getSubImage(0, 0, width, height)
+  def copy(): AsyncImg = getSubImage(0, 0, width, height)
 
-  @Override override def toString: String = s"ImgAsync($width X $height)"
+  override def toString: String = s"ImgAsync($width X $height)"
 
 }
 
