@@ -73,8 +73,10 @@ object ImgDOMUtils {
   def imgToImageData(img: Img): ImageData = {
     val ctx = canvasElement(img.width, img.height).getContext("2d").asInstanceOf[CanvasRenderingContext2D]
     val imageData = ctx.getImageData(0, 0, img.width, img.height)
-    for (i <- 0 until imageData.data.length) {
+    var i: Int = 0
+    while (i < imageData.data.length) {
       imageData.data(i) = img.pixelData(i)
+      i = i + 1
     }
     imageData
   }
@@ -107,7 +109,11 @@ object ImgDOMUtils {
 
   def blankImageData(width: Int, height: Int): ImageData = {
     val data = new Uint8ClampedArray(width * height * 4)
-    for (i <- 3 until data.length by 4) { data(i) = 0xff }
+    var i: Int = 3
+    while (i < data.length) {
+      data(i) = 0xff
+      i = i + 4
+    }
     new ImageData(data, width, height )
   }
 }

@@ -48,22 +48,30 @@ class Img (override val width: Int, val pixelData: Uint8ClampedArray) extends Im
   def getPixelData(xOffset: Int, yOffset: Int, w: Int, h: Int): Uint8ClampedArray = {
     val pixelData = new Uint8ClampedArray(w * h * 4)
     var j = 0
-    for (y <- 0 until h) {
-      for (x <- 0 until w) {
+    var y: Int = 0
+    while (y < h) {
+      var x: Int = 0
+      while (x < w) {
         val i:Int = linearIndexOf(xOffset + x, yOffset + y)
         pixelData(j) = this.pixelData(i)
         pixelData(j+1) = this.pixelData(i+1)
         pixelData(j+2) = this.pixelData(i+2)
         pixelData(j+3) = this.pixelData(i+3)
         j = j + 4
+        x = x + 1
       }
+      y = y + 1
     }
     pixelData
   }
 
   def setPixelData(pixelData:Uint8ClampedArray):ai.dragonfly.img.Img = {
     if (this.pixelData.length == pixelData.length) {
-      for (i <- 0 until this.pixelData.length) this.pixelData(i) = pixelData(i)
+      var i: Int = 0
+      while (i < this.pixelData.length) {
+        this.pixelData(i) = pixelData(i)
+        i = i + 1
+      }
     } else throw MismatchedDimensions(this.pixelData.length, pixelData.length)
     this
   }
@@ -71,15 +79,19 @@ class Img (override val width: Int, val pixelData: Uint8ClampedArray) extends Im
   def setPixelData(xOffset: Int, yOffset: Int, w: Int, h: Int, pixelData: Uint8ClampedArray): ai.dragonfly.img.Img = {
     var j = 0
 
-    for (y <- yOffset until yOffset + h) {
-      for (x <- xOffset until xOffset + w) {
+    var y: Int = yOffset
+    while (y < yOffset + h) {
+      var x: Int = xOffset
+      while (x < xOffset + w) {
         val i = linearIndexOf(x, y)
         this.pixelData(i) = pixelData(j)
         this.pixelData(i+1) = pixelData(j+1)
         this.pixelData(i+2) = pixelData(j+2)
         this.pixelData(i+3) = pixelData(j+3)
         j = j + 4
+        x = x + 1
       }
+      y = y + 1
     }
     this
   }
