@@ -1,9 +1,11 @@
 package ai.dragonfly.img.native
 
-import ai.dragonfly.color.*
+import ai.dragonfly.uriel.ColorContext.sRGB.ARGB32
 import ai.dragonfly.img.{Image, MismatchedDimensions}
 
 import scala.scalajs.js.typedarray.Uint8ClampedArray
+
+import scala.language.implicitConversions
 
 class Img (override val width: Int, val pixelData: Uint8ClampedArray) extends Image {
 
@@ -13,11 +15,11 @@ class Img (override val width: Int, val pixelData: Uint8ClampedArray) extends Im
 
   override def getARGB(x:Int, y:Int): Int = {
     val index = linearIndexOf(x,y)
-    RGBA(pixelData(index), pixelData(index+1), pixelData(index+2), pixelData(index+3)).argb
+    ARGB32(pixelData(index), pixelData(index+1), pixelData(index+2), pixelData(index+3))
   }
 
   override def setARGB(x:Int, y:Int, argb: Int): Unit = {
-    val c: RGBA = argb
+    val c: ARGB32 = argb.asInstanceOf[ARGB32]
     val index = linearIndexOf(x,y)
     pixelData(index) = c.red
     pixelData(index+1) = c.green
@@ -82,6 +84,6 @@ class Img (override val width: Int, val pixelData: Uint8ClampedArray) extends Im
     this
   }
 
-  override def toString(): String = s"Img($width X $height)"
+  override def toString: String = s"Img($width X $height)"
 
 }

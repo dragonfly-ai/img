@@ -22,10 +22,14 @@ trait Image {
   @JSExport def copy(): Img = getSubImage(0, 0, width, height)
 
   @JSExport def pixels(f: (Int, Int) => Any): Img = {
-    for (y <- 0 until height) {
-      for (x <- 0 until width) {
+    var y: Int = 0
+    while (y < height) {
+      var x: Int = 0
+      while (x < width) {
         f(x, y)
+        x = x + 1
       }
+      y = y + 1
     }
     this.asInstanceOf[Img]
   }

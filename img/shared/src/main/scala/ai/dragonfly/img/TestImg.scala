@@ -1,14 +1,15 @@
 package ai.dragonfly.img
 
-import ai.dragonfly.color.*
-import ai.dragonfly.math.stats.probability.distributions.stream.StreamingVectorStats
-import ai.dragonfly.math.vector.Vector3
+import ai.dragonfly.uriel.ColorContext.sRGB.{Luv, ARGB32}
+import slash.stats.probability.distributions.stream.StreamingVectorStats
+
+import scala.language.implicitConversions
 
 object TestImg {
 
   def main(args: Array[String]): Unit = apply()
 
-  import ai.dragonfly.color.Color._
+  import ai.dragonfly.uriel._
 
   def apply(): Unit = {
     val (width, height) = (11, 22)
@@ -17,14 +18,14 @@ object TestImg {
 
     println(s"i0 dimensions: ${i0.width} ${i0.height}")
     i0 pixels ((x: Int, y: Int) => {
-      i0.setARGB(x, y, LAB.random())
+      i0.setARGB(x, y, ARGB32.fromRGB(Luv.random().toRGB))
     })
 
-    val svs = new StreamingVectorStats(3)
+    val svs = new StreamingVectorStats[3]
 
     i0 pixels ((x: Int, y: Int) => {
-      val c: LAB = RGBA(i0.getARGB(x, y))
-      svs( Vector3(c.L, c.a, c.b) )
+      val luv: Luv = Luv.fromRGB(ARGB32(i0.getARGB(x, y)).toRGB)
+      svs( luv.vec )
     })
 
     println(svs)

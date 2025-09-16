@@ -2,13 +2,11 @@ package ai.dragonfly.img.native
 
 import ai.dragonfly.img.async.AsyncImg
 import org.scalajs.dom
-import dom.{CanvasRenderingContext2D, HTMLImageElement, html, window}
-import html.*
+import org.scalajs.dom.{CanvasRenderingContext2D, HTMLImageElement, ImageData, document}
+import org.scalajs.dom.html.Canvas
 
 import scala.concurrent.Future
-import scala.scalajs.js.annotation.{JSExport, JSGlobal, JSImport}
 import scala.scalajs.js.typedarray.Uint8ClampedArray
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
 
 /**
@@ -22,7 +20,7 @@ object ImgDOMUtils {
   private def randomCanvasId:String = s"Canvas${r.nextLong}"
 
   def canvasElement(width:Int, height:Int, id: String = randomCanvasId): Canvas = {
-    val canvasTag = dom.document.createElement("canvas").asInstanceOf[Canvas]
+    val canvasTag = document.createElement("canvas").asInstanceOf[Canvas]
     canvasTag.width = width
     canvasTag.height = height
     canvasTag.id = id
@@ -47,13 +45,13 @@ object ImgDOMUtils {
   }
 
   def imageElement(src: String): HTMLImageElement = {
-    val imgTag = dom.document.createElement("img").asInstanceOf[HTMLImageElement]
+    val imgTag = document.createElement("img").asInstanceOf[HTMLImageElement]
     imgTag.src = src
     imgTag
   }
 
   def preciseImageElement(width:Int, height:Int, id: String, src: String): HTMLImageElement = {
-    val imgTag:HTMLImageElement = dom.document.createElement("img").asInstanceOf[HTMLImageElement]
+    val imgTag:HTMLImageElement = document.createElement("img").asInstanceOf[HTMLImageElement]
     imgTag.width = width
     imgTag.height = height
     imgTag.id = id
@@ -67,12 +65,12 @@ object ImgDOMUtils {
 
   def toHtmlImage(aImg: AsyncImg): Future[HTMLImageElement] = aImg.reserveImgData[HTMLImageElement]( img => toHtmlImage( img ) )
 
-  private def imageDataToImg(imageData:dom.ImageData): Img = new Img(
+  def imageDataToImg(imageData: ImageData): Img = new Img(
     imageData.width,
-    imageData.data.asInstanceOf[Uint8ClampedArray]
+    imageData.data
   )
 
-  private def imgToImageData(img: Img): dom.ImageData = {
+  def imgToImageData(img: Img): ImageData = {
     val ctx = canvasElement(img.width, img.height).getContext("2d").asInstanceOf[CanvasRenderingContext2D]
     val imageData = ctx.getImageData(0, 0, img.width, img.height)
     for (i <- 0 until imageData.data.length) {
@@ -107,17 +105,9 @@ object ImgDOMUtils {
     new AsyncImg(new Img(img.width, img.pixelData))
   }
 
-  def blankImageData(width: Int, height: Int): dom.ImageData = {
+  def blankImageData(width: Int, height: Int): ImageData = {
     val data = new Uint8ClampedArray(width * height * 4)
     for (i <- 3 until data.length by 4) { data(i) = 0xff }
     new ImageData(data, width, height )
   }
-}
-
-@js.native @JSGlobal
-class ImageData extends dom.ImageData {
-
-  def this(data: Uint8ClampedArray, width: Int) = this()
-  def this(data: Uint8ClampedArray, width: Int, height: Int) = this()
-
 }
