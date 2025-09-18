@@ -17,11 +17,8 @@
 package ai.dragonfly.img.native
 
 import java.awt.image.BufferedImage
-import java.io.File
-import java.net.URL
 
 import ai.dragonfly.img.Image
-import javax.imageio.ImageIO
 
 import scala.language.implicitConversions
 
@@ -84,30 +81,4 @@ class Img (override val width: Int, private val pixelData: Array[Int]) extends I
     }
     this
   }
-}
-
-object TestImageJVM extends App {
-  import Img._
-  val i0: Img = ImageIO.read( new URL( "https://mollymo.me/img/upperCalfCreek.png" ) )
-  val i2: Img = i0.copy()
-  i0.setSubImage(0, 0, i2.getSubImage(100, 100, 100, 100) )
-  ImageIO.write(i0, "PNG", new File("/home/c/output/i0.png"))
-}etPixels(xOffset: Int, yOffset: Int, w: Int, h: Int, pxls: Array[Int]): Img = {
-    var i = 0
-    for (j <- linearIndexOf(xOffset, yOffset) until linearIndexOf(xOffset + w, yOffset + h-1) by width) {
-      for (k <- j until j + w) {
-        pixelData(k) = pxls(i)
-        i = i + 1
-      }
-    }
-    this
-  }
-}
-
-object TestImageJVM extends App {
-  import Img._
-  val i0: Img = ImageIO.read( new URL( "https://mollymo.me/img/upperCalfCreek.png" ) )
-  val i2: Img = i0.copy()
-  i0.setSubImage(0, 0, i2.getSubImage(100, 100, 100, 100) )
-  ImageIO.write(i0, "PNG", new File("/home/c/output/i0.png"))
 }
