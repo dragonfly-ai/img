@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 dragonfly.ai
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package ai.dragonfly.img.native
 
 import java.awt.image.BufferedImage
@@ -59,6 +75,24 @@ class Img (override val width: Int, private val pixelData: Array[Int]) extends I
   }
 
   private def setPixels(xOffset: Int, yOffset: Int, w: Int, h: Int, pxls: Array[Int]): Img = {
+    var i = 0
+    for (j <- linearIndexOf(xOffset, yOffset) until linearIndexOf(xOffset + w, yOffset + h-1) by width) {
+      for (k <- j until j + w) {
+        pixelData(k) = pxls(i)
+        i = i + 1
+      }
+    }
+    this
+  }
+}
+
+object TestImageJVM extends App {
+  import Img._
+  val i0: Img = ImageIO.read( new URL( "https://mollymo.me/img/upperCalfCreek.png" ) )
+  val i2: Img = i0.copy()
+  i0.setSubImage(0, 0, i2.getSubImage(100, 100, 100, 100) )
+  ImageIO.write(i0, "PNG", new File("/home/c/output/i0.png"))
+}etPixels(xOffset: Int, yOffset: Int, w: Int, h: Int, pxls: Array[Int]): Img = {
     var i = 0
     for (j <- linearIndexOf(xOffset, yOffset) until linearIndexOf(xOffset + w, yOffset + h-1) by width) {
       for (k <- j until j + w) {
