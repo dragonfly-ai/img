@@ -1,8 +1,8 @@
 # img
-A cross published Scala.js library for Image Processing.
+A cross published Scala library for Image Processing.
 
 ## Overview:
-This Scala.js library brings convenient, high performance, image representation classes with low level processing capabilities to JavaScript and JVM environments.
+This Scala.js library brings convenient, high performance, image representation classes with low level processing capabilities to Scala.js, Scala JVM, and Scala Native.
 
 ## Internals:
 From the perspective of Scala on the JVM, the Img class wraps an Array[Int] for fast conversion to Java's <a href="https://docs.oracle.com/javase/8/docs/api/java/awt/image/BufferedImage.html">BufferedImage</a> type to maximize interoperability with other JVM image processing libraries.
