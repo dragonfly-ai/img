@@ -62,22 +62,30 @@ class Img (override val width: Int, private val pixelData: Array[Int]) extends I
   private def getPixels(xOffset: Int, yOffset: Int, w: Int, h: Int): Array[Int] = {
     val pxls: Array[Int] = new Array[Int](w * h)
     var i = 0
-    for (y <- 0 until h) {
-      for (x <- 0 until w) {
+    var y = 0
+    while (y < h) {
+      var x = 0
+      while (x < w) {
         pxls(i) = getARGB(xOffset + x, yOffset + y)
         i = i + 1
+        x = x + 1
       }
+      y = y + 1
     }
     pxls
   }
 
   private def setPixels(xOffset: Int, yOffset: Int, w: Int, h: Int, pxls: Array[Int]): Img = {
     var i = 0
-    for (j <- linearIndexOf(xOffset, yOffset) until linearIndexOf(xOffset + w, yOffset + h-1) by width) {
-      for (k <- j until j + w) {
+    var j = linearIndexOf(xOffset, yOffset)
+    while (j < linearIndexOf(xOffset + w, yOffset + h-1)) {
+      var k = j
+      while (k < j + w) {
         pixelData(k) = pxls(i)
         i = i + 1
+        k = k + 1
       }
+      j = j + width
     }
     this
   }
