@@ -41,7 +41,7 @@ object TestImg {
 
     i0 pixels ((x: Int, y: Int) => {
       val luv: Luv = Luv.fromRGB(ARGB32(i0.getARGB(x, y)).toRGB)
-      svs( luv.vec )
+      svs( luv.vec.toVec )
     })
 
     println(svs)

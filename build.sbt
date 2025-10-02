@@ -25,7 +25,7 @@ lazy val img = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     name := "img",
     Compile / mainClass := Some("ai.dragonfly.img.TestImg"),
-    libraryDependencies ++= Seq( "ai.dragonfly" %%% "uriel" % "0.11")
+    libraryDependencies ++= Seq( "ai.dragonfly" %%% "uriel" % "0.12")
   ).jsSettings(
     libraryDependencies ++= Seq( "org.scala-js" %%% "scalajs-dom" % "2.8.1"),
     scalaJSUseMainModuleInitializer := true
