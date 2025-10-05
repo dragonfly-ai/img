@@ -6,7 +6,6 @@ import ai.dragonfly.img.native.ImgDOMUtils.*
 import org.scalajs.dom
 import dom.*
 
-import scala.scalajs.js.typedarray.Uint8ClampedArray
 import scala.language.implicitConversions
 
 object Demo {
@@ -51,12 +50,11 @@ object Demo {
 
       })
 
-
       body.appendChild(
         toHtmlImage(
           new Img(
             400,
-            blankImageData(400, 10).data.asInstanceOf[Uint8ClampedArray]
+            blankImageData(400, 10).data
           )
         )
       )
