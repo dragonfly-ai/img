@@ -1,11 +1,13 @@
-import ai.dragonfly.color.*
-import ai.dragonfly.color.Color.toLab
+
+import ai.dragonfly.uriel.ColorContext.sRGB.*
+
 import ai.dragonfly.img.native.Img
 import ai.dragonfly.img.native.ImgDOMUtils.*
 import org.scalajs.dom
-import dom.{HTMLImageElement, document}
+import dom.*
 
 import scala.scalajs.js.typedarray.Uint8ClampedArray
+import scala.language.implicitConversions
 
 object Demo {
 
@@ -24,7 +26,8 @@ object Demo {
         body.appendChild(toHtmlImage(img))
 
         // Write processed Img instance to DOM
-        body.appendChild(toHtmlImage(img pixels { (x, y) => img.setARGB(x, y, SlowSlimLab(toLab(RGBA(img.getARGB(x,y))).L, 0, 0).argb) }))
+        //body.appendChild(toHtmlImage(img pixels { (x, y) => img.setARGB(x, y, SlowSlimLab(toLab(ARGB32(img.getARGB(x,y))).L, 0, 0).argb) }))
+        body.appendChild(toHtmlImage(img pixels { (x, y) => img.setARGB(x, y, ARGB32.fromXYZ(Lab(Lab.fromXYZ(ARGB32(img.getARGB(x,y)).toXYZ).L, 0f, 0f).toXYZ)) }))
       })
 
       val caliCarabidElement:HTMLImageElement = preciseImageElement(400, 272, "CaliCarabid", "./image/CaliCarabid.png")

@@ -36,8 +36,8 @@ lazy val img = crossProject(JSPlatform, JVMPlatform, NativePlatform)
 lazy val browserDemo = project.enablePlugins(ScalaJSPlugin).dependsOn(img.projects(JSPlatform)).settings(
   name := "browserDemo",
   Compile / mainClass := Some("Demo"),
-  Compile / fastOptJS / artifactPath := file("./DemoServer/js/main.js"),
-  Compile / fullOptJS / artifactPath := file("./DemoServer/js/main.js"),
+  Compile / fastOptJS / artifactPath := file("./docs/js/main.js"),
+  Compile / fullOptJS / artifactPath := file("./docs/js/main.js"),
   scalaJSUseMainModuleInitializer := true
 )
 
