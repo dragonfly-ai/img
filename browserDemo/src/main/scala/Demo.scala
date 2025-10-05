@@ -27,7 +27,7 @@ object Demo {
 
         // Write processed Img instance to DOM
         //body.appendChild(toHtmlImage(img pixels { (x, y) => img.setARGB(x, y, SlowSlimLab(toLab(ARGB32(img.getARGB(x,y))).L, 0, 0).argb) }))
-        body.appendChild(toHtmlImage(img pixels { (x, y) => img.setARGB(x, y, ARGB32.fromXYZ(Lab(Lab.fromXYZ(ARGB32(img.getARGB(x,y)).toXYZ).L, 0f, 0f).toXYZ)) }))
+        body.appendChild(toHtmlImage(img pixels { (x, y) => img.setARGB(x, y, ARGB32.fromXYZ(Luv(Luv.fromXYZ(ARGB32(img.getARGB(x,y)).toXYZ).L, 0f, 0f).toXYZ)) }))
       })
 
       val caliCarabidElement:HTMLImageElement = preciseImageElement(400, 272, "CaliCarabid", "./image/CaliCarabid.png")

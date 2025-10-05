@@ -63,7 +63,7 @@ class Img (override val width: Int, val pixelData: Uint8ClampedArray) extends Im
 
   def getPixelData(xOffset: Int, yOffset: Int, w: Int, h: Int): Uint8ClampedArray = {
     val pixelData = new Uint8ClampedArray(w * h * 4)
-    var j = 0
+    var j: Int = 0
     var y: Int = 0
     while (y < h) {
       var x: Int = 0
@@ -93,7 +93,7 @@ class Img (override val width: Int, val pixelData: Uint8ClampedArray) extends Im
   }
 
   def setPixelData(xOffset: Int, yOffset: Int, w: Int, h: Int, pixelData: Uint8ClampedArray): ai.dragonfly.img.Img = {
-    var j = 0
+    var j: Int = 0
 
     var y: Int = yOffset
     while (y < yOffset + h) {
