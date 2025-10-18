@@ -17,13 +17,12 @@
 package ai.dragonfly.img.native
 
 import ai.dragonfly.img.async.AsyncImg
-import org.scalajs.dom
+
 import org.scalajs.dom.{CanvasRenderingContext2D, HTMLImageElement, ImageData, document}
 import org.scalajs.dom.html.Canvas
 
 import scala.concurrent.Future
 import scala.scalajs.js.typedarray.Uint8ClampedArray
-import scala.scalajs.js
 
 /**
  * Created by clifton on 12/31/16.

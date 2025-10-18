@@ -16,7 +16,6 @@
 
 package ai.dragonfly.img
 
-import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
 
 trait Image {
