@@ -104,9 +104,9 @@ class AsyncImg(private var img:Img) {
     (im: Img) => im.copy()
   )
 
-  def copy(): AsyncImg = getSubImage(0, 0, width, height)
+  def copy: AsyncImg = getSubImage( 0, 0, width, height )
 
-  override def toString: String = s"ImgAsync($width X $height)"
+  override def toString: String = s"AsyncImg($width X $height)"
 
 }
 
