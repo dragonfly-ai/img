@@ -24,7 +24,6 @@ lazy val img = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .settings(
     name := "img",
-    Compile / mainClass := Some("ai.dragonfly.img.TestImg"),
     libraryDependencies ++= Seq( "ai.dragonfly" %%% "uriel" % "0.13")
   ).jsSettings(
     libraryDependencies ++= Seq( "org.scala-js" %%% "scalajs-dom" % "2.8.1"),
