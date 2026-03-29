@@ -68,5 +68,5 @@ lazy val tests = crossProject(
   .dependsOn(img)
   .settings(
     name := "img-tests",
-    libraryDependencies += "org.scalameta" %%% "munit" % "1.2.1" % Test
+    libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
   )
